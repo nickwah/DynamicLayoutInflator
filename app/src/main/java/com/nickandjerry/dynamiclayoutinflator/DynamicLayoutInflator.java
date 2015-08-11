@@ -3,16 +3,20 @@ package com.nickandjerry.dynamiclayoutinflator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.media.Image;
 import android.os.Build;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -411,7 +415,37 @@ public class DynamicLayoutInflator {
                     if (bgValue.startsWith("@drawable/")) {
                         view.setBackground(getDrawableByName(view, bgValue));
                     } else if (bgValue.startsWith("#")) {
-                        view.setBackgroundColor(parseColor(bgValue));
+                        if (view instanceof Button || attrs.containsKey("pressedColor")) {
+                            int bgColor = parseColor(bgValue);
+                            int pressedColor;
+                            if (attrs.containsKey("pressedColor")) {
+                                pressedColor = parseColor(attrs.get("pressedColor"));
+                            } else {
+                                pressedColor = adjustBrightness(bgColor, 0.9f);
+                            }
+                            GradientDrawable gd = new GradientDrawable();
+                            gd.setColor(bgColor);
+                            GradientDrawable pressedGd = new GradientDrawable();
+                            pressedGd.setColor(pressedColor);
+                            if (attrs.containsKey("cornerRadius")) {
+                                float cornerRadius = DimensionConverter.stringToDimension(attrs.get("cornerRadius"), view.getResources().getDisplayMetrics());
+                                gd.setCornerRadius(cornerRadius);
+                                pressedGd.setCornerRadius(cornerRadius);
+                            }
+                            StateListDrawable selector = new StateListDrawable();
+                            selector.addState(new int[]{android.R.attr.state_pressed}, pressedGd);
+                            selector.addState(new int[]{}, gd);
+                            view.setBackground(selector);
+                        } else if (attrs.containsKey("cornerRadius")) {
+                            GradientDrawable gd = new GradientDrawable();
+                            gd.setColor(parseColor(bgValue));
+                            if (attrs.containsKey("cornerRadius")) {
+                                gd.setCornerRadius(DimensionConverter.stringToDimension(attrs.get("cornerRadius"), view.getResources().getDisplayMetrics()));
+                            }
+                            view.setBackground(gd);
+                        } else {
+                            view.setBackgroundColor(parseColor(bgValue));
+                        }
                     }
                     break;
                 case "src":
@@ -574,6 +608,16 @@ public class DynamicLayoutInflator {
 
     public static int parseColor(String text) {
         return Color.parseColor(text);
+    }
+
+    public static int adjustBrightness(int color, float amount) {
+        int red = color & 0xFF0000 >> 16;
+        int green = color & 0x00FF00 >> 8;
+        int blue = color & 0x0000FF;
+        int result = (int)(blue * amount);
+        result += (int)(green * amount) << 8;
+        result += (int)(red * amount) << 16;
+        return result;
     }
 
     public static Drawable getDrawableByName(View view, String name) {
