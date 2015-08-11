@@ -257,6 +257,11 @@ public class DynamicLayoutInflator {
                         ((LinearLayout.LayoutParams)layoutParams).gravity = parseGravity(entry.getValue());
                     }
                     break;
+                case "layout_weight":
+                    if (parent != null && parent instanceof LinearLayout) {
+                        ((LinearLayout.LayoutParams)layoutParams).weight = Float.parseFloat(entry.getValue());
+                    }
+                    break;
                 case "layout_below":
                     layoutRule = RelativeLayout.BELOW;
                     layoutTarget = true;
