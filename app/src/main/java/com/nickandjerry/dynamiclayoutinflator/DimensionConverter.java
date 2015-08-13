@@ -1,6 +1,7 @@
 package com.nickandjerry.dynamiclayoutinflator;
 
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 
 import java.util.Collections;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
  * Taken from http://stackoverflow.com/questions/8343971/how-to-parse-a-dimension-string-and-convert-it-to-a-dimension-value
  */
 public class DimensionConverter {
+    public static Map<String, Float>cached = new HashMap<>();
 
     // -- Initialize dimension string to constant lookup.
     public static final Map<String, Integer> dimensionConstantLookup = initDimensionConstantLookup();
@@ -34,20 +36,29 @@ public class DimensionConverter {
 
     public static int stringToDimensionPixelSize(String dimension, DisplayMetrics metrics) {
         // -- Mimics TypedValue.complexToDimensionPixelSize(int data, DisplayMetrics metrics).
-        InternalDimension internalDimension = stringToInternalDimension(dimension);
-        final float value = internalDimension.value;
-        final float f = TypedValue.applyDimension(internalDimension.unit, value, metrics);
+        final float f;
+        if (cached.containsKey(dimension)) {
+            f = cached.get(dimension);
+        } else {
+            InternalDimension internalDimension = stringToInternalDimension(dimension);
+            final float value = internalDimension.value;
+            f = TypedValue.applyDimension(internalDimension.unit, value, metrics);
+            cached.put(dimension, f);
+        }
         final int res = (int)(f+0.5f);
         if (res != 0) return res;
-        if (value == 0) return 0;
-        if (value > 0) return 1;
+        if (f == 0) return 0;
+        if (f > 0) return 1;
         return -1;
     }
 
     public static float stringToDimension(String dimension, DisplayMetrics metrics) {
+        if (cached.containsKey(dimension)) return cached.get(dimension);
         // -- Mimics TypedValue.complexToDimension(int data, DisplayMetrics metrics).
         InternalDimension internalDimension = stringToInternalDimension(dimension);
-        return TypedValue.applyDimension(internalDimension.unit, internalDimension.value, metrics);
+        float val = TypedValue.applyDimension(internalDimension.unit, internalDimension.value, metrics);
+        cached.put(dimension, val);
+        return val;
     }
 
     private static InternalDimension stringToInternalDimension(String dimension) {
@@ -69,6 +80,7 @@ public class DimensionConverter {
                 return new InternalDimension(value, dimensionUnit);
             }
         } else {
+            Log.e("DimensionConverter", "Invalid number format: " + dimension);
             // -- Invalid format.
             throw new NumberFormatException();
         }
