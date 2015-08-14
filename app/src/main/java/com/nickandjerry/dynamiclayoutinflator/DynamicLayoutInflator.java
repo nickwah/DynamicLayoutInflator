@@ -2,15 +2,12 @@ package com.nickandjerry.dynamiclayoutinflator;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.media.Image;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.text.InputType;
@@ -81,9 +78,14 @@ public class DynamicLayoutInflator {
     public static final String[] CORNERS = {"TopLeft", "TopRight", "BottomRight", "BottomLeft"};
     public static int highestIdNumberUsed = 1234567;
 
+    public interface ViewParamRunnable {
+        void apply(View view, String value, ViewGroup parent, Map<String, String> attrs);
+    }
+    public static Map<String, ViewParamRunnable> viewRunnables;
+
     public interface ImageLoader {
-        public void loadImage(ImageView view, String url);
-        public void loadRoundedImage(ImageView view, String url, int radius);
+        void loadImage(ImageView view, String url);
+        void loadRoundedImage(ImageView view, String url, int radius);
     }
 
     private static ImageLoader imageLoader = null;
@@ -215,6 +217,7 @@ public class DynamicLayoutInflator {
 
     @SuppressLint("NewApi")
     private static void applyAttributes(View view, Map<String, String> attrs, ViewGroup parent) {
+        if (viewRunnables == null) createViewRunnables();
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
         int layoutRule;
         int marginLeft = 0, marginRight = 0, marginTop = 0, marginBottom = 0,
@@ -222,6 +225,10 @@ public class DynamicLayoutInflator {
         boolean hasCornerRadius = false, hasCornerRadii = false;
         for (Map.Entry<String,String> entry : attrs.entrySet()) {
             String attr = entry.getKey();
+            if (viewRunnables.containsKey(attr)) {
+                viewRunnables.get(attr).apply(view, entry.getValue(), parent, attrs);
+                continue;
+            }
             if (attr.startsWith("cornerRadius")) {
                 hasCornerRadius = true;
                 hasCornerRadii = !attr.equals("cornerRadius");
@@ -367,184 +374,6 @@ public class DynamicLayoutInflator {
                     break;
                 case "paddingBottom":
                     paddingBottom = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
-                    break;
-                case "orientation":
-                    if (view instanceof LinearLayout) {
-                        ((LinearLayout)view).setOrientation(entry.getValue().equals("vertical") ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
-                    }
-                    break;
-                case "text":
-                    if (view instanceof TextView) {
-                        ((TextView)view).setText(entry.getValue());
-                    }
-                    break;
-                case "textColor":
-                    if (view instanceof TextView) {
-                        ((TextView)view).setTextColor(parseColor(view, entry.getValue()));
-                    }
-                    break;
-                case "textSize":
-                    if (view instanceof TextView) {
-                        ((TextView)view).setTextSize(DimensionConverter.stringToDimension(entry.getValue(), view.getResources().getDisplayMetrics()) / 2.0f);
-                    }
-                    break;
-                case "textStyle":
-                    if (view instanceof TextView) {
-                        int typeFace = Typeface.NORMAL;
-                        if (entry.getValue().contains("bold")) typeFace |= Typeface.BOLD;
-                        else  if (entry.getValue().contains("italic")) typeFace |= Typeface.ITALIC;
-                        ((TextView) view).setTypeface(null, typeFace);
-                    }
-                    break;
-                case "textAlignment":
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                        int alignment = View.TEXT_ALIGNMENT_TEXT_START;
-                        switch (entry.getValue()) {
-                            case "center":
-                                alignment = View.TEXT_ALIGNMENT_CENTER;
-                                break;
-                            case "left":
-                            case "textStart":
-                                break;
-                            case "right":
-                            case "textEnd":
-                                alignment = View.TEXT_ALIGNMENT_TEXT_END;
-                                break;
-                        }
-                        view.setTextAlignment(alignment);
-                    } else {
-                        int gravity = Gravity.LEFT;
-                        switch (entry.getValue()) {
-                            case "center":
-                                gravity = Gravity.CENTER;
-                                break;
-                            case "left":
-                            case "textStart":
-                                break;
-                            case "right":
-                            case "textEnd":
-                                gravity = Gravity.RIGHT;
-                                break;
-                        }
-                        ((TextView)view).setGravity(gravity);
-                    }
-                    break;
-                case "ellipsize":
-                    if (view instanceof TextView) {
-                        TextUtils.TruncateAt where = TextUtils.TruncateAt.END;
-                        switch (entry.getValue()) {
-                            case "start":
-                                where = TextUtils.TruncateAt.START;
-                                break;
-                            case "middle":
-                                where = TextUtils.TruncateAt.MIDDLE;
-                                break;
-                            case "marquee":
-                                where = TextUtils.TruncateAt.MARQUEE;
-                                break;
-                            case "end":
-                                break;
-                        }
-                        ((TextView) view).setEllipsize(where);
-                    }
-                    break;
-                case "singleLine":
-                    if (view instanceof TextView) {
-                        ((TextView)view).setSingleLine();
-                    }
-                    break;
-                case "hint":
-                    if (view instanceof EditText) {
-                        ((EditText)view).setHint(entry.getValue());
-                    }
-                    break;
-                case "inputType":
-                    if (view instanceof TextView) {
-                        int inputType = 0;
-                        switch (entry.getValue()) {
-                            case "textEmailAddress":
-                                inputType |= InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
-                                break;
-                            case "number":
-                                inputType |= InputType.TYPE_CLASS_NUMBER;
-                                break;
-                            case "phone":
-                                inputType |= InputType.TYPE_CLASS_PHONE;
-                                break;
-                        }
-                        if (inputType > 0) ((TextView)view).setInputType(inputType);
-                    }
-                    break;
-                case "gravity":
-                    int gravity = parseGravity(entry.getValue());
-                    if (view instanceof TextView) {
-                        ((TextView) view).setGravity(gravity);
-                    } else if (view instanceof LinearLayout) {
-                        ((LinearLayout)view).setGravity(gravity);
-                    } else if (view instanceof RelativeLayout) {
-                        ((RelativeLayout)view).setGravity(gravity);
-                    }
-                    break;
-                case "src":
-                    if (view instanceof ImageView) {
-                        String imageName = entry.getValue();
-                        if (imageName.startsWith("//")) imageName = "http:" + imageName;
-                        if (imageName.startsWith("http")) {
-                            if (imageLoader != null) {
-                                if (attrs.containsKey("cornerRadius")) {
-                                    int radius = DimensionConverter.stringToDimensionPixelSize(attrs.get("cornerRadius"), view.getResources().getDisplayMetrics());
-                                    imageLoader.loadRoundedImage((ImageView)view, imageName, radius);
-                                } else {
-                                    imageLoader.loadImage((ImageView) view, imageName);
-                                }
-                            }
-                        } else if (imageName.startsWith("@drawable/")) {
-                            imageName = imageName.substring("@drawable/".length());
-                            ((ImageView)view).setImageDrawable(getDrawableByName(view, imageName));
-                        }
-                    }
-                    break;
-                case "scaleType":
-                    if (view instanceof ImageView) {
-                        ImageView.ScaleType scaleType = ((ImageView)view).getScaleType();
-                        switch (entry.getValue().toLowerCase()) {
-                            case "center":
-                                scaleType = ImageView.ScaleType.CENTER;
-                                break;
-                            case "center_crop":
-                                scaleType = ImageView.ScaleType.CENTER_CROP;
-                                break;
-                            case "center_inside":
-                                scaleType = ImageView.ScaleType.CENTER_INSIDE;
-                                break;
-                            case "fit_center":
-                                scaleType = ImageView.ScaleType.FIT_CENTER;
-                                break;
-                            case "fit_end":
-                                scaleType = ImageView.ScaleType.FIT_END;
-                                break;
-                            case "fit_start":
-                                scaleType = ImageView.ScaleType.FIT_START;
-                                break;
-                            case "fit_xy":
-                                scaleType = ImageView.ScaleType.FIT_XY;
-                                break;
-                            case "matrix":
-                                scaleType = ImageView.ScaleType.MATRIX;
-                                break;
-                        }
-                        ((ImageView) view).setScaleType(scaleType);
-                    }
-                    break;
-                case "visibility":
-                    int visibility = View.VISIBLE;
-                    String visValue = entry.getValue().toLowerCase();
-                    if (visValue.equals("gone")) visibility = View.GONE;
-                    else if (visValue.equals("invisible")) visibility = View.INVISIBLE;
-                    view.setVisibility(visibility);
-                    break;
-                case "onClick":
-                    view.setOnClickListener(getClickListener(parent, entry.getValue()));
                     break;
 
             }
@@ -819,6 +648,246 @@ public class DynamicLayoutInflator {
         Resources resources = view.getResources();
         return resources.getDrawable(resources.getIdentifier(name, "drawable",
                 view.getContext().getPackageName()));
+    }
+
+    public static void createViewRunnables() {
+        viewRunnables = new HashMap<>(30);
+        viewRunnables.put("scaleType", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof ImageView) {
+                    ImageView.ScaleType scaleType = ((ImageView)view).getScaleType();
+                    switch (value.toLowerCase()) {
+                        case "center":
+                            scaleType = ImageView.ScaleType.CENTER;
+                            break;
+                        case "center_crop":
+                            scaleType = ImageView.ScaleType.CENTER_CROP;
+                            break;
+                        case "center_inside":
+                            scaleType = ImageView.ScaleType.CENTER_INSIDE;
+                            break;
+                        case "fit_center":
+                            scaleType = ImageView.ScaleType.FIT_CENTER;
+                            break;
+                        case "fit_end":
+                            scaleType = ImageView.ScaleType.FIT_END;
+                            break;
+                        case "fit_start":
+                            scaleType = ImageView.ScaleType.FIT_START;
+                            break;
+                        case "fit_xy":
+                            scaleType = ImageView.ScaleType.FIT_XY;
+                            break;
+                        case "matrix":
+                            scaleType = ImageView.ScaleType.MATRIX;
+                            break;
+                    }
+                    ((ImageView) view).setScaleType(scaleType);
+                }
+            }
+        });
+        viewRunnables.put("orientation", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof LinearLayout) {
+                    ((LinearLayout)view).setOrientation(value.equals("vertical") ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                }
+            }
+        });
+        viewRunnables.put("text", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    ((TextView)view).setText(value);
+                }
+            }
+        });
+        viewRunnables.put("textSize", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    ((TextView)view).setTextSize(DimensionConverter.stringToDimension(value, view.getResources().getDisplayMetrics()) / 2.0f);
+                }
+            }
+        });
+        viewRunnables.put("textColor", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    ((TextView)view).setTextColor(parseColor(view, value));
+                }
+            }
+        });
+        viewRunnables.put("textStyle", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    int typeFace = Typeface.NORMAL;
+                    if (value.contains("bold")) typeFace |= Typeface.BOLD;
+                    else  if (value.contains("italic")) typeFace |= Typeface.ITALIC;
+                    ((TextView) view).setTypeface(null, typeFace);
+                }
+            }
+        });
+        viewRunnables.put("textAlignment", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                    int alignment = View.TEXT_ALIGNMENT_TEXT_START;
+                    switch (value) {
+                        case "center":
+                            alignment = View.TEXT_ALIGNMENT_CENTER;
+                            break;
+                        case "left":
+                        case "textStart":
+                            break;
+                        case "right":
+                        case "textEnd":
+                            alignment = View.TEXT_ALIGNMENT_TEXT_END;
+                            break;
+                    }
+                    view.setTextAlignment(alignment);
+                } else {
+                    int gravity = Gravity.LEFT;
+                    switch (value) {
+                        case "center":
+                            gravity = Gravity.CENTER;
+                            break;
+                        case "left":
+                        case "textStart":
+                            break;
+                        case "right":
+                        case "textEnd":
+                            gravity = Gravity.RIGHT;
+                            break;
+                    }
+                    ((TextView)view).setGravity(gravity);
+                }
+            }
+        });
+        viewRunnables.put("ellipsize", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    TextUtils.TruncateAt where = TextUtils.TruncateAt.END;
+                    switch (value) {
+                        case "start":
+                            where = TextUtils.TruncateAt.START;
+                            break;
+                        case "middle":
+                            where = TextUtils.TruncateAt.MIDDLE;
+                            break;
+                        case "marquee":
+                            where = TextUtils.TruncateAt.MARQUEE;
+                            break;
+                        case "end":
+                            break;
+                    }
+                    ((TextView) view).setEllipsize(where);
+                }
+            }
+        });
+        viewRunnables.put("singleLine", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    ((TextView)view).setSingleLine();
+                }
+            }
+        });
+        viewRunnables.put("hint", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof EditText) {
+                    ((EditText)view).setHint(value);
+                }
+            }
+        });
+        viewRunnables.put("inputType", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof TextView) {
+                    int inputType = 0;
+                    switch (value) {
+                        case "textEmailAddress":
+                            inputType |= InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+                            break;
+                        case "number":
+                            inputType |= InputType.TYPE_CLASS_NUMBER;
+                            break;
+                        case "phone":
+                            inputType |= InputType.TYPE_CLASS_PHONE;
+                            break;
+                    }
+                    if (inputType > 0) ((TextView)view).setInputType(inputType);
+                }
+            }
+        });
+        viewRunnables.put("gravity", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                int gravity = parseGravity(value);
+                if (view instanceof TextView) {
+                    ((TextView) view).setGravity(gravity);
+                } else if (view instanceof LinearLayout) {
+                    ((LinearLayout)view).setGravity(gravity);
+                } else if (view instanceof RelativeLayout) {
+                    ((RelativeLayout)view).setGravity(gravity);
+                }
+            }
+        });
+        viewRunnables.put("src", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                if (view instanceof ImageView) {
+                    String imageName = value;
+                    if (imageName.startsWith("//")) imageName = "http:" + imageName;
+                    if (imageName.startsWith("http")) {
+                        if (imageLoader != null) {
+                            if (attrs.containsKey("cornerRadius")) {
+                                int radius = DimensionConverter.stringToDimensionPixelSize(attrs.get("cornerRadius"), view.getResources().getDisplayMetrics());
+                                imageLoader.loadRoundedImage((ImageView)view, imageName, radius);
+                            } else {
+                                imageLoader.loadImage((ImageView) view, imageName);
+                            }
+                        }
+                    } else if (imageName.startsWith("@drawable/")) {
+                        imageName = imageName.substring("@drawable/".length());
+                        ((ImageView)view).setImageDrawable(getDrawableByName(view, imageName));
+                    }
+                }
+            }
+        });
+        viewRunnables.put("visibility", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                int visibility = View.VISIBLE;
+                String visValue = value.toLowerCase();
+                if (visValue.equals("gone")) visibility = View.GONE;
+                else if (visValue.equals("invisible")) visibility = View.INVISIBLE;
+                view.setVisibility(visibility);
+            }
+        });
+        viewRunnables.put("clickable", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                view.setClickable(value.equals("true"));
+            }
+        });
+        viewRunnables.put("tag", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                // Sigh, this is dangerous because we use tags for other purposes
+                if (view.getTag() == null) view.setTag(value);
+            }
+        });
+        viewRunnables.put("onClick", new ViewParamRunnable() {
+            @Override
+            public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
+                view.setOnClickListener(getClickListener(parent, value));
+            }
+        });
     }
 
 }
