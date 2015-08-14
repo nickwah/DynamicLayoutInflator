@@ -206,7 +206,9 @@ public class DynamicLayoutInflator {
         HashMap<String, String> attributes = new HashMap<>(attributeCount);
         for (int j = 0; j < attributeCount; j++) {
             Node attr = attributeMap.item(j);
-            attributes.put(attr.getNodeName(), attr.getNodeValue());
+            String nodeName = attr.getNodeName();
+            if (nodeName.startsWith("android:")) nodeName = nodeName.substring(8);
+            attributes.put(nodeName, attr.getNodeValue());
         }
         return attributes;
     }
@@ -220,7 +222,6 @@ public class DynamicLayoutInflator {
         boolean hasCornerRadius = false, hasCornerRadii = false;
         for (Map.Entry<String,String> entry : attrs.entrySet()) {
             String attr = entry.getKey();
-            if (attr.startsWith("android:")) attr = attr.substring(8);
             if (attr.startsWith("cornerRadius")) {
                 hasCornerRadius = true;
                 hasCornerRadii = !attr.equals("cornerRadius");
@@ -503,6 +504,38 @@ public class DynamicLayoutInflator {
                         }
                     }
                     break;
+                case "scaleType":
+                    if (view instanceof ImageView) {
+                        ImageView.ScaleType scaleType = ((ImageView)view).getScaleType();
+                        switch (entry.getValue().toLowerCase()) {
+                            case "center":
+                                scaleType = ImageView.ScaleType.CENTER;
+                                break;
+                            case "center_crop":
+                                scaleType = ImageView.ScaleType.CENTER_CROP;
+                                break;
+                            case "center_inside":
+                                scaleType = ImageView.ScaleType.CENTER_INSIDE;
+                                break;
+                            case "fit_center":
+                                scaleType = ImageView.ScaleType.FIT_CENTER;
+                                break;
+                            case "fit_end":
+                                scaleType = ImageView.ScaleType.FIT_END;
+                                break;
+                            case "fit_start":
+                                scaleType = ImageView.ScaleType.FIT_START;
+                                break;
+                            case "fit_xy":
+                                scaleType = ImageView.ScaleType.FIT_XY;
+                                break;
+                            case "matrix":
+                                scaleType = ImageView.ScaleType.MATRIX;
+                                break;
+                        }
+                        ((ImageView) view).setScaleType(scaleType);
+                    }
+                    break;
                 case "visibility":
                     int visibility = View.VISIBLE;
                     String visValue = entry.getValue().toLowerCase();
@@ -603,12 +636,11 @@ public class DynamicLayoutInflator {
                 }
             }
         }
-        if (marginLeft > 0 || marginTop > 0 || marginRight > 0 || marginBottom > 0) {
-            ((RelativeLayout.LayoutParams) layoutParams).setMargins(marginLeft, marginTop, marginRight, marginBottom);
+
+        if (layoutParams instanceof ViewGroup.MarginLayoutParams) {
+            ((ViewGroup.MarginLayoutParams) layoutParams).setMargins(marginLeft, marginTop, marginRight, marginBottom);
         }
-        if (paddingBottom > 0 || paddingLeft > 0 || paddingRight > 0 || paddingTop > 0) {
-            view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-        }
+        view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
         view.setLayoutParams(layoutParams);
     }
 
@@ -637,46 +669,61 @@ public class DynamicLayoutInflator {
                     root = (ViewGroup)root.getParent();
                 }
                 if (info != null && info.delegate != null) {
-                    Object[] args = null;
-                    String finalMethod = methodName;
-                    if (methodName.endsWith(")")) {
-                        String[] parts = methodName.split("[(]", 2);
-                        finalMethod = parts[0];
-                        try {
-                            String argText = parts[1].replace("&quot;", "\"");
-                            JSONArray arr = new JSONArray("[" + argText.substring(0, argText.length() - 1) + "]");
-                            args = new Object[arr.length()];
-                            for (int i = 0; i < arr.length(); i++) {
-                                args[i] = arr.get(i);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
                     final Object delegate = info.delegate;
-                    Class<?> klass = delegate.getClass();
-                    try {
+                    invokeMethod(delegate, methodName, false, view);
+                } else {
+                    Log.e("DynamicLayoutInflator", "Unable to find valid delegate for click named " + methodName);
+                }
+            }
 
-                        Class<?>[] argClasses = null;
-                        if (args != null && args.length > 0) {
-                            argClasses = new Class[args.length];
+            private void invokeMethod(Object delegate, final String methodName, boolean withView, View view) {
+                Object[] args = null;
+                String finalMethod = methodName;
+                if (methodName.endsWith(")")) {
+                    String[] parts = methodName.split("[(]", 2);
+                    finalMethod = parts[0];
+                    try {
+                        String argText = parts[1].replace("&quot;", "\"");
+                        JSONArray arr = new JSONArray("[" + argText.substring(0, argText.length() - 1) + "]");
+                        args = new Object[arr.length()];
+                        for (int i = 0; i < arr.length(); i++) {
+                            args[i] = arr.get(i);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (withView) {
+                    args = new Object[1];
+                    args[0] = view;
+                }
+                Class<?> klass = delegate.getClass();
+                try {
+
+                    Class<?>[] argClasses = null;
+                    if (args != null && args.length > 0) {
+                        argClasses = new Class[args.length];
+                        if (withView) {
+                            argClasses[0] = View.class;
+                        } else {
                             for (int i = 0; i < args.length; i++) {
                                 Class<?> argClass = args[i].getClass();
-                                if (argClass == Integer.class) argClass = int.class; // Nobody uses Integer...
+                                if (argClass == Integer.class)
+                                    argClass = int.class; // Nobody uses Integer...
                                 argClasses[i] = argClass;
                             }
                         }
-                        Method method = klass.getMethod(finalMethod, argClasses);
-                        method.invoke(delegate, args);
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
-                        e.printStackTrace();
-                    } catch (NoSuchMethodException e) {
-                        e.printStackTrace();
                     }
-                } else {
-                    Log.e("DynamicLayoutInflator", "Unable to find valid delegate for click named " + methodName);
+                    Method method = klass.getMethod(finalMethod, argClasses);
+                    method.invoke(delegate, args);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                    if (!withView && !methodName.endsWith(")")) {
+                        invokeMethod(delegate, methodName, true, view);
+                    }
                 }
             }
         };
