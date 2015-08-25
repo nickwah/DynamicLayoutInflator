@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -707,7 +708,7 @@ public class DynamicLayoutInflator {
             @Override
             public void apply(View view, String value, ViewGroup parent, Map<String, String> attrs) {
                 if (view instanceof TextView) {
-                    ((TextView)view).setTextSize(DimensionConverter.stringToDimension(value, view.getResources().getDisplayMetrics()) / 2.0f);
+                    ((TextView)view).setTextSize(TypedValue.COMPLEX_UNIT_PX, DimensionConverter.stringToDimension(value, view.getResources().getDisplayMetrics()));
                 }
             }
         });
