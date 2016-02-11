@@ -9,7 +9,10 @@ Example: (see MainActivity.java for details)
         setContentView(R.layout.activity_main);
         RelativeLayout main = (RelativeLayout)findViewById(R.id.main_top);
         try {
-            View view = DynamicLayoutInflator.inflate(this, getAssets().open("testlayout.xml"), main);
+            View view = DynamicLayoutInflator.inflateName(this, "testlayout");
+            main.addView(view);
+            // The above two lines could also be written like this, if you know that testlayout is in your assets:
+            // View view = DynamicLayoutInflator.inflate(this, getAssets().open("testlayout.xml"), main);
             DynamicLayoutInflator.setDelegate(view, this);
             // If we have <TextView id="message" ... />, this is how to access it:
             TextView someTextView = (TextView)DynamicLayoutInflator.findViewByIdString("message");
