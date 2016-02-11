@@ -15,6 +15,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -112,6 +113,31 @@ public class DynamicLayoutInflator {
             info = (DynamicLayoutInfo)root.getTag();
         }
         info.delegate = delegate;
+    }
+
+    public static View inflateName(Context context, String name) {
+        if (name.startsWith("<")) {
+            // Assume it's XML
+            return DynamicLayoutInflator.inflate(context, name);
+        } else {
+            File savedFile = context.getFileStreamPath(name + ".xml");
+            try {
+                InputStream fileStream = new FileInputStream(savedFile);
+                return DynamicLayoutInflator.inflate(context, fileStream);
+            } catch (FileNotFoundException e) {
+            }
+            try {
+                InputStream assetStream = context.getAssets().open(name + ".xml");
+                return DynamicLayoutInflator.inflate(context, assetStream);
+            } catch (IOException e) {
+            }
+            int id = context.getResources().getIdentifier(name, "layout", context.getPackageName());
+            if (id > 0) {
+                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                return inflater.inflate(id, null, false);
+            }
+        }
+        return null;
     }
 
     public static View inflate(Context context, File xmlPath) {
