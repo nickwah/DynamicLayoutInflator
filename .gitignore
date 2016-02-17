@@ -30,3 +30,5 @@ proguard/
 /.idea/libraries
 .DS_Store
 /captures
+
+*~
