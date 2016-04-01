@@ -34,3 +34,7 @@ Example: (see MainActivity.java for details)
 ## See also:
 
 [iOS dynamic xml layouts](https://github.com/nickwah/NWLayoutInflator)
+
+## License
+
+Open source under the MIT license. See LICENSE for details.
