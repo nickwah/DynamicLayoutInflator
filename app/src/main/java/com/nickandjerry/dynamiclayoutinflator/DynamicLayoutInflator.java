@@ -116,25 +116,28 @@ public class DynamicLayoutInflator {
     }
 
     public static View inflateName(Context context, String name) {
+        return inflateName(context, name, null);
+    }
+    public static View inflateName(Context context, String name, ViewGroup parent) {
         if (name.startsWith("<")) {
             // Assume it's XML
-            return DynamicLayoutInflator.inflate(context, name);
+            return DynamicLayoutInflator.inflate(context, name, parent);
         } else {
             File savedFile = context.getFileStreamPath(name + ".xml");
             try {
                 InputStream fileStream = new FileInputStream(savedFile);
-                return DynamicLayoutInflator.inflate(context, fileStream);
+                return DynamicLayoutInflator.inflate(context, fileStream, parent);
             } catch (FileNotFoundException e) {
             }
             try {
                 InputStream assetStream = context.getAssets().open(name + ".xml");
-                return DynamicLayoutInflator.inflate(context, assetStream);
+                return DynamicLayoutInflator.inflate(context, assetStream, parent);
             } catch (IOException e) {
             }
             int id = context.getResources().getIdentifier(name, "layout", context.getPackageName());
             if (id > 0) {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                return inflater.inflate(id, null, false);
+                return inflater.inflate(id, parent, false);
             }
         }
         return null;
@@ -190,11 +193,11 @@ public class DynamicLayoutInflator {
     }
     public static View inflate(Context context, Node node, ViewGroup parent) {
         View mainView = getViewForName(context, node.getNodeName());
+        if (parent != null) parent.addView(mainView); // have to add to parent to enable certain layout attrs
+        applyAttributes(mainView, getAttributesMap(node), parent);
         if (mainView instanceof ViewGroup && node.hasChildNodes()) {
             parseChildren(context, node, (ViewGroup) mainView);
         }
-        if (parent != null) parent.addView(mainView); // have to add to parent to enable certain layout attrs
-        applyAttributes(mainView, getAttributesMap(node), parent);
         return mainView;
     }
 
@@ -284,7 +287,7 @@ public class DynamicLayoutInflator {
                             layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
                             break;
                         default:
-                            layoutParams.width = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
+                            layoutParams.width = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics(), parent, true);
                             break;
                     }
                     break;
@@ -299,7 +302,7 @@ public class DynamicLayoutInflator {
                             layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
                             break;
                         default:
-                            layoutParams.height = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
+                            layoutParams.height = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics(), parent, false);
                             break;
                     }
                     break;
@@ -376,16 +379,16 @@ public class DynamicLayoutInflator {
                     marginLeft = marginRight = marginTop = marginBottom = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
                     break;
                 case "layout_marginLeft":
-                    marginLeft = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
+                    marginLeft = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics(), parent, true);
                     break;
                 case "layout_marginTop":
-                    marginTop = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
+                    marginTop = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics(), parent, false);
                     break;
                 case "layout_marginRight":
-                    marginRight = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
+                    marginRight = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics(), parent, true);
                     break;
                 case "layout_marginBottom":
-                    marginBottom = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());
+                    marginBottom = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics(), parent, false);
                     break;
                 case "padding":
                     paddingBottom = paddingLeft = paddingRight = paddingTop = DimensionConverter.stringToDimensionPixelSize(entry.getValue(), view.getResources().getDisplayMetrics());

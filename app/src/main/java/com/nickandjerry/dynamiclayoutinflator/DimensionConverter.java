@@ -3,6 +3,7 @@ package com.nickandjerry.dynamiclayoutinflator;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.ViewGroup;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +35,13 @@ public class DimensionConverter {
     // -- Initialize pattern for dimension string.
     private static final Pattern DIMENSION_PATTERN = Pattern.compile("^\\s*(\\d+(\\.\\d+)*)\\s*([a-zA-Z]+)\\s*$");
 
+    public static int stringToDimensionPixelSize(String dimension, DisplayMetrics metrics, ViewGroup parent, boolean horizontal) {
+        if (dimension.endsWith("%")) {
+            float pct = Float.parseFloat(dimension.substring(0, dimension.length() - 1)) / 100.0f;
+            return (int)(pct * (horizontal ? parent.getMeasuredWidth() : parent.getMeasuredHeight()));
+        }
+        return stringToDimensionPixelSize(dimension, metrics);
+    }
     public static int stringToDimensionPixelSize(String dimension, DisplayMetrics metrics) {
         // -- Mimics TypedValue.complexToDimensionPixelSize(int data, DisplayMetrics metrics).
         final float f;
