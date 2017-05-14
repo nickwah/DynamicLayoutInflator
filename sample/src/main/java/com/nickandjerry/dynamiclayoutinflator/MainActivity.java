@@ -2,23 +2,25 @@ package com.nickandjerry.dynamiclayoutinflator;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.RelativeLayout;
 
+import com.nickandjerry.dynamiclayoutinflator.lib.DynamicLayoutInflator;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        RelativeLayout main = (RelativeLayout)findViewById(R.id.main_top);
+        RelativeLayout main = (RelativeLayout) findViewById(R.id.main_top);
         try {
             View view = DynamicLayoutInflator.inflate(this, getAssets().open("testlayout.xml"), main);
             DynamicLayoutInflator.setDelegate(view, this);

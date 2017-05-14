@@ -1,4 +1,4 @@
-package com.nickandjerry.dynamiclayoutinflator;
+package com.nickandjerry.dynamiclayoutinflator.lib;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
