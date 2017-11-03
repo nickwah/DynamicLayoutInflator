@@ -1,8 +1,9 @@
-package com.nickandjerry.dynamiclayoutinflator.lib;
+package com.nickandjerry.dynamiclayoutinflator.lib.util;
 
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.Collections;
@@ -13,14 +14,15 @@ import java.util.regex.Pattern;
 
 /**
  * Created by nick on 8/10/15.
- *
+ * <p>
  * Taken from http://stackoverflow.com/questions/8343971/how-to-parse-a-dimension-string-and-convert-it-to-a-dimension-value
  */
-public class DimensionConverter {
-    public static Map<String, Float>cached = new HashMap<>();
+public class Dimensions {
+    public static Map<String, Float> cached = new HashMap<>();
 
     // -- Initialize dimension string to constant lookup.
     public static final Map<String, Integer> dimensionConstantLookup = initDimensionConstantLookup();
+
     private static Map<String, Integer> initDimensionConstantLookup() {
         Map<String, Integer> m = new HashMap<String, Integer>();
         m.put("px", TypedValue.COMPLEX_UNIT_PX);
@@ -32,17 +34,23 @@ public class DimensionConverter {
         m.put("mm", TypedValue.COMPLEX_UNIT_MM);
         return Collections.unmodifiableMap(m);
     }
+
     // -- Initialize pattern for dimension string.
     private static final Pattern DIMENSION_PATTERN = Pattern.compile("^\\s*(\\d+(\\.\\d+)*)\\s*([a-zA-Z]+)\\s*$");
 
-    public static int stringToDimensionPixelSize(String dimension, DisplayMetrics metrics, ViewGroup parent, boolean horizontal) {
+    public static int parseToPixel(String dimension, DisplayMetrics metrics, ViewGroup parent, boolean horizontal) {
         if (dimension.endsWith("%")) {
             float pct = Float.parseFloat(dimension.substring(0, dimension.length() - 1)) / 100.0f;
-            return (int)(pct * (horizontal ? parent.getMeasuredWidth() : parent.getMeasuredHeight()));
+            return (int) (pct * (horizontal ? parent.getMeasuredWidth() : parent.getMeasuredHeight()));
         }
-        return stringToDimensionPixelSize(dimension, metrics);
+        return parseToPixel(dimension, metrics);
     }
-    public static int stringToDimensionPixelSize(String dimension, DisplayMetrics metrics) {
+
+    public static int parseToPixel(String dimension, View view) {
+        return parseToPixel(dimension, view.getResources().getDisplayMetrics());
+    }
+
+    public static int parseToPixel(String dimension, DisplayMetrics metrics) {
         // -- Mimics TypedValue.complexToDimensionPixelSize(int data, DisplayMetrics metrics).
         final float f;
         if (cached.containsKey(dimension)) {
@@ -53,7 +61,7 @@ public class DimensionConverter {
             f = TypedValue.applyDimension(internalDimension.unit, value, metrics);
             cached.put(dimension, f);
         }
-        final int res = (int)(f+0.5f);
+        final int res = (int) (f + 0.5f);
         if (res != 0) return res;
         if (f == 0) return 0;
         if (f > 0) return 1;
@@ -88,7 +96,7 @@ public class DimensionConverter {
                 return new InternalDimension(value, dimensionUnit);
             }
         } else {
-            Log.e("DimensionConverter", "Invalid number format: " + dimension);
+            Log.e("Dimensions", "Invalid number format: " + dimension);
             // -- Invalid format.
             throw new NumberFormatException();
         }

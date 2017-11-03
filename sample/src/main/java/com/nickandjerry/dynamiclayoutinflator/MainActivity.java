@@ -1,6 +1,6 @@
 package com.nickandjerry.dynamiclayoutinflator;
 
-import android.support.v7.app.ActionBarActivity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -9,7 +9,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.nickandjerry.dynamiclayoutinflator.lib.DynamicLayoutInflator;
+
+import com.stardust.dynamiclayoutinflator.DynamicLayoutInflater;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.IOException;
 
@@ -21,9 +26,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         RelativeLayout main = (RelativeLayout) findViewById(R.id.main_top);
+        DynamicLayoutInflater inflator = new DynamicLayoutInflater(this);
         try {
-            View view = DynamicLayoutInflator.inflate(this, getAssets().open("testlayout.xml"), main);
-            DynamicLayoutInflator.setDelegate(view, this);
+            XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+            parser.setInput(getAssets().open("testlayout.xml"), "utf-8");
+            inflator.inflate(parser, main, true);
+        } catch (XmlPullParserException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -53,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startActivity(new Intent(this, TestActivity.class));
             return true;
         }
 
