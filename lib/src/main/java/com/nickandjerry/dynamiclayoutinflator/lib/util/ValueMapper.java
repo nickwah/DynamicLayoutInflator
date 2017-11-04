@@ -22,12 +22,20 @@ public class ValueMapper<V> {
         return this;
     }
 
-    public V getOrThrow(String key) {
+    public V get(String key) {
         V v = mHashMap.get(key);
         if (v == null) {
             throw new InflateException(String.format("unknown value for %s: %s", mAttrName, key));
         }
         return v;
+    }
+
+    public int split(String str){
+        int r = 0;
+        for(String s : str.split("|")){
+            r |= (Integer) get(s);
+        }
+        return r;
     }
 
 }

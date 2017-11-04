@@ -1,8 +1,17 @@
 package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 
+import android.graphics.PorterDuff;
+import android.os.Build;
+import android.renderscript.Sampler;
 import android.view.InflateException;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
+import com.nickandjerry.dynamiclayoutinflator.lib.ImageLoader;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.Colors;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.Dimensions;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.Drawables;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.ValueMapper;
 
 import java.util.Map;
 
@@ -14,40 +23,88 @@ public class ImageViewAttrSetter<V extends ImageView> extends BaseViewAttrSetter
 
     @Override
     public boolean setAttr(V view, String attr, String value, ViewGroup parent, Map<String, String> attrs) {
+        if (super.setAttr(view, attr, value, parent, attrs)) {
+            return true;
+        }
         switch (attr) {
+            case "adjustViewBounds":
+                view.setAdjustViewBounds(Boolean.valueOf(value));
+                break;
+            case "baseline":
+                view.setBaseline(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "baselineAlignBottom":
+                view.setBaselineAlignBottom(Boolean.valueOf(value));
+                break;
+            case "cropToPadding":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setCropToPadding(Boolean.valueOf(value));
+                }
+                break;
+            case "maxHeight":
+                view.setMaxHeight(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "maxWidth":
+                view.setMaxWidth(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "path":
+                view.setImageDrawable(Drawables.parse(view, wrapAsPath(value)));
+                break;
             case "scaleType":
                 view.setScaleType(parseScaleType(value));
                 break;
+            case "src":
+                view.setImageDrawable(Drawables.parse(view, value));
+                break;
+            case "tint":
+                view.setColorFilter(Colors.parse(view, value));
+                break;
+            case "tintMode":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.setImageTintMode(TINT_MODES.get(value));
+                }
+                break;
+            case "url":
+                view.setImageDrawable(Drawables.parse(view, wrapAsUrl(value)));
+                break;
+            default:
+                return false;
         }
-        return super.setAttr(view, attr, value, parent, attrs);
+        return true;
+    }
+
+    private String wrapAsPath(String value) {
+        if (!value.startsWith("file://")) {
+            return "file://" + value;
+        }
+        return value;
+    }
+
+    private String wrapAsUrl(String value) {
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            return "http://" + value;
+        }
+        return value;
     }
 
     private ImageView.ScaleType parseScaleType(String value) {
         switch (value.toLowerCase()) {
             case "center":
                 return ImageView.ScaleType.CENTER;
-            break;
             case "center_crop":
                 return ImageView.ScaleType.CENTER_CROP;
-            break;
             case "center_inside":
                 return ImageView.ScaleType.CENTER_INSIDE;
-            break;
             case "fit_center":
                 return ImageView.ScaleType.FIT_CENTER;
-            break;
             case "fit_end":
                 return ImageView.ScaleType.FIT_END;
-            break;
             case "fit_start":
                 return ImageView.ScaleType.FIT_START;
-            break;
             case "fit_xy":
                 return ImageView.ScaleType.FIT_XY;
-            break;
             case "matrix":
                 return ImageView.ScaleType.MATRIX;
-            break;
         }
         throw new InflateException("unknown scale type: " + value);
     }

@@ -7,10 +7,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 
-import com.stardust.dynamiclayoutinflator.DynamicLayoutInflater;
+import com.nickandjerry.dynamiclayoutinflator.lib.DynamicLayoutInflater;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -25,15 +26,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        RelativeLayout main = (RelativeLayout) findViewById(R.id.main_top);
-        DynamicLayoutInflater inflator = new DynamicLayoutInflater(this);
+        FrameLayout main = (FrameLayout) findViewById(R.id.main_top);
+        DynamicLayoutInflater inflater = new DynamicLayoutInflater(this);
         try {
-            XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
-            parser.setInput(getAssets().open("testlayout.xml"), "utf-8");
-            inflator.inflate(parser, main, true);
-        } catch (XmlPullParserException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+            inflater.inflate(getAssets().open("testlayout.xml"), main);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

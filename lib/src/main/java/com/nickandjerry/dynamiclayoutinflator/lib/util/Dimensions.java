@@ -3,8 +3,10 @@ package com.nickandjerry.dynamiclayoutinflator.lib.util;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,97 +20,50 @@ import java.util.regex.Pattern;
  * Taken from http://stackoverflow.com/questions/8343971/how-to-parse-a-dimension-string-and-convert-it-to-a-dimension-value
  */
 public class Dimensions {
-    public static Map<String, Float> cached = new HashMap<>();
 
-    // -- Initialize dimension string to constant lookup.
-    public static final Map<String, Integer> dimensionConstantLookup = initDimensionConstantLookup();
+    private static final ValueMapper<Integer> UNITS = new ValueMapper<Integer>("unit")
+            .map("px", TypedValue.COMPLEX_UNIT_PX)
+            .map("dip", TypedValue.COMPLEX_UNIT_DIP)
+            .map("dp", TypedValue.COMPLEX_UNIT_DIP)
+            .map("sp", TypedValue.COMPLEX_UNIT_SP)
+            .map("pt", TypedValue.COMPLEX_UNIT_PT)
+            .map("in", TypedValue.COMPLEX_UNIT_IN)
+            .map("mm", TypedValue.COMPLEX_UNIT_MM);
 
-    private static Map<String, Integer> initDimensionConstantLookup() {
-        Map<String, Integer> m = new HashMap<String, Integer>();
-        m.put("px", TypedValue.COMPLEX_UNIT_PX);
-        m.put("dip", TypedValue.COMPLEX_UNIT_DIP);
-        m.put("dp", TypedValue.COMPLEX_UNIT_DIP);
-        m.put("sp", TypedValue.COMPLEX_UNIT_SP);
-        m.put("pt", TypedValue.COMPLEX_UNIT_PT);
-        m.put("in", TypedValue.COMPLEX_UNIT_IN);
-        m.put("mm", TypedValue.COMPLEX_UNIT_MM);
-        return Collections.unmodifiableMap(m);
-    }
 
-    // -- Initialize pattern for dimension string.
-    private static final Pattern DIMENSION_PATTERN = Pattern.compile("^\\s*(\\d+(\\.\\d+)*)\\s*([a-zA-Z]+)\\s*$");
+    private static final Pattern DIMENSION_PATTERN = Pattern.compile("([0-9.]+)([a-zA-Z]*)");
 
     public static int parseToPixel(String dimension, DisplayMetrics metrics, ViewGroup parent, boolean horizontal) {
         if (dimension.endsWith("%")) {
             float pct = Float.parseFloat(dimension.substring(0, dimension.length() - 1)) / 100.0f;
             return (int) (pct * (horizontal ? parent.getMeasuredWidth() : parent.getMeasuredHeight()));
         }
-        return parseToPixel(dimension, metrics);
+        return parseToIntPixel(dimension, metrics);
     }
 
-    public static int parseToPixel(String dimension, View view) {
+    public static float parseToPixel(String dimension, View view) {
         return parseToPixel(dimension, view.getResources().getDisplayMetrics());
     }
 
-    public static int parseToPixel(String dimension, DisplayMetrics metrics) {
-        // -- Mimics TypedValue.complexToDimensionPixelSize(int data, DisplayMetrics metrics).
-        final float f;
-        if (cached.containsKey(dimension)) {
-            f = cached.get(dimension);
-        } else {
-            InternalDimension internalDimension = stringToInternalDimension(dimension);
-            final float value = internalDimension.value;
-            f = TypedValue.applyDimension(internalDimension.unit, value, metrics);
-            cached.put(dimension, f);
+    public static float parseToPixel(String dimension, DisplayMetrics metrics) {
+        Matcher m = DIMENSION_PATTERN.matcher(dimension);
+        if (!m.matches()) {
+            throw new InflateException("dimension cannot be resolved: " + dimension);
         }
-        final int res = (int) (f + 0.5f);
-        if (res != 0) return res;
-        if (f == 0) return 0;
-        if (f > 0) return 1;
-        return -1;
+        int unit = m.groupCount() == 2 ? UNITS.get(m.group(2)) : TypedValue.COMPLEX_UNIT_PX;
+        float value = Integer.valueOf(m.group(1));
+        return TypedValue.applyDimension(unit, value, metrics);
     }
 
-    public static float stringToDimension(String dimension, DisplayMetrics metrics) {
-        if (cached.containsKey(dimension)) return cached.get(dimension);
-        // -- Mimics TypedValue.complexToDimension(int data, DisplayMetrics metrics).
-        InternalDimension internalDimension = stringToInternalDimension(dimension);
-        float val = TypedValue.applyDimension(internalDimension.unit, internalDimension.value, metrics);
-        cached.put(dimension, val);
-        return val;
+    public static int parseToIntPixel(String value, View view) {
+        return Math.round(parseToPixel(value, view));
     }
 
-    private static InternalDimension stringToInternalDimension(String dimension) {
-        // -- Match target against pattern.
-        Matcher matcher = DIMENSION_PATTERN.matcher(dimension);
-        if (matcher.matches()) {
-            // -- Match found.
-            // -- Extract value.
-            float value = Float.valueOf(matcher.group(1)).floatValue();
-            // -- Extract dimension units.
-            String unit = matcher.group(3).toLowerCase();
-            // -- Get Android dimension constant.
-            Integer dimensionUnit = dimensionConstantLookup.get(unit);
-            if (dimensionUnit == null) {
-                // -- Invalid format.
-                throw new NumberFormatException();
-            } else {
-                // -- Return valid dimension.
-                return new InternalDimension(value, dimensionUnit);
-            }
-        } else {
-            Log.e("Dimensions", "Invalid number format: " + dimension);
-            // -- Invalid format.
-            throw new NumberFormatException();
-        }
-    }
-
-    private static class InternalDimension {
-        float value;
-        int unit;
-
-        public InternalDimension(float value, int unit) {
-            this.value = value;
-            this.unit = unit;
-        }
+    public static int parseToIntPixel(String value, DisplayMetrics metrics) {
+        return Math.round(parseToPixel(value, metrics));
     }
 }
+
+
+
+

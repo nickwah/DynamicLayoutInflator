@@ -16,9 +16,13 @@ public class Colors {
         if (color.startsWith("@color/")) {
             return resources.getColor(resources.getIdentifier(color.substring("@color/".length()), "color", context.getPackageName()));
         }
-        if (color.length() == 4 && color.startsWith("#")) {
-            color = "#" + color.charAt(1) + color.charAt(1) + color.charAt(2) + color.charAt(2) + color.charAt(3) + color.charAt(3);
+        if (color.startsWith("@android:color/")) {
+            return Color.parseColor(color.substring(15));
         }
         return Color.parseColor(color);
+    }
+
+    public static int parse(View view, String color){
+        return parse(view.getContext(), color);
     }
 }

@@ -21,7 +21,7 @@ public class TestActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         RelativeLayout main = new RelativeLayout(this);
         try {
-            View view = DynamicLayoutInflater.inflate(this, getAssets().open("test_single_text.xml"), main);
+            View view = new DynamicLayoutInflater(this).inflate(getAssets().open("test_single_text.xml"), main);
             setContentView(main);
         } catch (IOException e) {
             e.printStackTrace();

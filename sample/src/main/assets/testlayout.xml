@@ -1,7 +1,9 @@
 <RelativeLayout height="match_parent" width="match_parent">
 
     <TextView gravity="center" height="wrap_content" id="@+id/hello_world" layout_centerInParent="true"
-              text="Hello World" textSize="18sp" width="match_parent"/>
+              text="Hello World" textSize="18sp" width="match_parent" textColor="#ffffff"
+              background="#ff0000"/>
+
     <TextView background="#80A0C0"
               cornerRadius="5dp" height="wrap_content" layout_below="@+id/hello_world"
               layout_centerHorizontal="true" layout_marginTop="20dp" onClick="logStringNum(&quot;test&quot;, 123)"

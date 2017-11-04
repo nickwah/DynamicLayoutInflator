@@ -1,7 +1,8 @@
 package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 
+import android.content.res.ColorStateList;
+import android.graphics.PorterDuff;
 import android.os.Build;
-import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -10,11 +11,12 @@ import android.widget.RelativeLayout;
 
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Colors;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Dimensions;
-import com.nickandjerry.dynamiclayoutinflator.lib.DynamicLayoutInflater;
 import com.nickandjerry.dynamiclayoutinflator.lib.ViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Drawables;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Gravities;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Ids;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.Strings;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.ValueMapper;
 
 import java.util.Map;
 
@@ -24,7 +26,64 @@ import java.util.Map;
 
 public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
 
-    private DynamicLayoutInflater mLayoutInflater;
+
+    protected static final ValueMapper<PorterDuff.Mode> TINT_MODES = new ValueMapper<PorterDuff.Mode>("tintMode")
+            .map("add", PorterDuff.Mode.ADD)
+            .map("multiply", PorterDuff.Mode.MULTIPLY)
+            .map("screen", PorterDuff.Mode.SCREEN)
+            .map("src_atop", PorterDuff.Mode.SRC_ATOP)
+            .map("src_in", PorterDuff.Mode.SRC_IN)
+            .map("src_over", PorterDuff.Mode.SRC_OVER);
+
+    private static final ValueMapper<Integer> DRAWABLE_CACHE_QUALITIES = new ValueMapper<Integer>("drawingCacheQuality")
+            .map("auto", View.DRAWING_CACHE_QUALITY_AUTO)
+            .map("high", View.DRAWING_CACHE_QUALITY_HIGH)
+            .map("low", View.DRAWING_CACHE_QUALITY_LOW);
+
+    private static final ValueMapper<Integer> IMPORTANT_FOR_ACCESSIBILITY = new ValueMapper<Integer>("importantForAccessibility")
+            .map("auto", 0) //View.IMPORTANT_FOR_ACCESSIBILITY_AUTO)
+            .map("no", 2) //View.IMPORTANT_FOR_ACCESSIBILITY_NO)
+            .map("noHideDescendants", 4) //View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS)
+            .map("yes", 1); //View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+    private static final ValueMapper<Integer> LAYOUT_DIRECTIONS = new ValueMapper<Integer>("layoutDirection")
+            .map("inherit", 2)
+            .map("locale", 3)
+            .map("ltr", 0)
+            .map("rtl", 1);
+    private static final ValueMapper<Integer> SCROLLBARS_STYLES = new ValueMapper<Integer>("scrollbarStyle")
+            .map("insideInset", View.SCROLLBARS_INSIDE_INSET)
+            .map("insideOverlay", View.SCROLLBARS_INSIDE_OVERLAY)
+            .map("outsideInset", View.SCROLLBARS_OUTSIDE_INSET)
+            .map("outsideOverlay", View.SCROLLBARS_OUTSIDE_OVERLAY);
+    private static final ValueMapper<Integer> SCROLL_INDICATORS = new ValueMapper<Integer>("scrollIndicators")
+            .map("bottom", 2) //View.SCROLL_INDICATOR_BOTTOM)
+            .map("end", 20) //View.SCROLL_INDICATOR_END)
+            .map("left", 4) //View.SCROLL_INDICATOR_LEFT)
+            .map("none", 0)
+            .map("right", 8) //View.SCROLL_INDICATOR_RIGHT)
+            .map("start", 10) //View.SCROLL_INDICATOR_START)
+            .map("top", 1); //View.SCROLL_INDICATOR_TOP)
+    private static final ValueMapper<Integer> VISIBILITY = new ValueMapper<Integer>("visibility")
+            .map("visible", View.VISIBLE)
+            .map("invisible", View.INVISIBLE)
+            .map("gone", View.GONE);
+    private static final ValueMapper<Integer> TEXT_DIRECTIONS = new ValueMapper<Integer>("textDirection")
+            .map("anyRtl", 2)
+            .map("firstStrong", 1)
+            .map("firstStrongLtr", 6)
+            .map("firstStrongRtl", 7)
+            .map("inherit", 0)
+            .map("locale", 5)
+            .map("ltr", 3)
+            .map("rtl", 4);
+    private static final ValueMapper<Integer> TEXT_ALIGNMENTS = new ValueMapper<Integer>("textAlignment")
+            .map("center", 4)
+            .map("gravity", 1)
+            .map("inherit", 0)
+            .map("textEnd", 3)
+            .map("textStart", 2)
+            .map("viewEnd", 6)
+            .map("viewStart", 5);
 
     @Override
     public boolean setAttr(V view, String attr, String value, ViewGroup parent, Map<String, String> attrs) {
@@ -137,60 +196,358 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             case "layout_margin":
                 if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                    params.bottomMargin = params.leftMargin = params.topMargin = params.leftMargin = Dimensions.parseToPixel(value, view);
+                    int margin = Dimensions.parseToIntPixel(value, view);
+                    params.bottomMargin = params.leftMargin = params.topMargin = params.rightMargin = margin;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        params.setMarginStart(margin);
+                        params.setMarginEnd(margin);
+                    }
                 }
                 break;
             case "layout_marginLeft":
                 if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                    params.leftMargin = Dimensions.parseToPixel(value, view);
+                    params.leftMargin = Dimensions.parseToIntPixel(value, view);
                 }
                 break;
             case "layout_marginTop":
                 if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                    params.topMargin = Dimensions.parseToPixel(value, view);
+                    params.topMargin = Dimensions.parseToIntPixel(value, view);
                 }
                 break;
             case "layout_marginRight":
                 if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                    params.rightMargin = Dimensions.parseToPixel(value, view);
+                    params.rightMargin = Dimensions.parseToIntPixel(value, view);
                 }
                 break;
             case "layout_marginBottom":
                 if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                    params.bottomMargin = Dimensions.parseToPixel(value, view);
+                    params.bottomMargin = Dimensions.parseToIntPixel(value, view);
                 }
                 break;
             case "padding":
-                int p = Dimensions.parseToPixel(value, view);
+                int p = Dimensions.parseToIntPixel(value, view);
                 view.setPadding(p, p, p, p);
                 break;
             case "paddingLeft":
-                view.setPadding(Dimensions.parseToPixel(value, view), view.getPaddingTop(), view.getPaddingRight(), view.getPaddingBottom());
+                view.setPadding(Dimensions.parseToIntPixel(value, view), view.getPaddingTop(), view.getPaddingRight(), view.getPaddingBottom());
                 break;
             case "paddingTop":
-                view.setPadding(view.getLeft(), Dimensions.parseToPixel(value, view), view.getPaddingRight(), view.getPaddingBottom());
+                view.setPadding(view.getLeft(), Dimensions.parseToIntPixel(value, view), view.getPaddingRight(), view.getPaddingBottom());
                 break;
             case "paddingRight":
-                view.setPadding(view.getLeft(), view.getPaddingTop(), Dimensions.parseToPixel(value, view), view.getPaddingBottom());
+                view.setPadding(view.getLeft(), view.getPaddingTop(), Dimensions.parseToIntPixel(value, view), view.getPaddingBottom());
                 break;
             case "paddingBottom":
-                view.setPadding(view.getLeft(), view.getPaddingTop(), view.getPaddingRight(), Dimensions.parseToPixel(value, view));
+                view.setPadding(view.getLeft(), view.getPaddingTop(), view.getPaddingRight(), Dimensions.parseToIntPixel(value, view));
                 break;
             case "background":
-                if (value.startsWith("@drawable/")) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        view.setBackground(Drawables.parse(view.getContext(), value));
-                    } else {
-                        view.setBackgroundDrawable(Drawables.parse(view.getContext(), value));
-                    }
-                } else if (value.startsWith("#") || value.startsWith("@color")) {
-                    view.setBackgroundColor(Colors.parse(view.getContext(), value));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setBackground(Drawables.parse(view, value));
+                } else {
+                    view.setBackgroundDrawable(Drawables.parse(view, value));
                 }
-                throw new InflateException("Unknown value for background: " + value);
+                break;
+            case "accessibilityLiveRegion":
+            case "accessibilityTraversalAfter":
+            case "accessibilityTraversalBefore":
+                Util.unsupports(view, attr, value);
+            case "alpha":
+                view.setAlpha(Float.valueOf(value));
+                break;
+            case "autofillHints":
+            case "autofilledHighlight":
+                Util.unsupports(view, attr, value);
+                break;
+            case "backgroundTint":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.setBackgroundTintList(ColorStateList.valueOf(Colors.parse(view, value)));
+                }
+                break;
+            case "backgroundTintMode":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.setBackgroundTintMode(TINT_MODES.get(value));
+                }
+                break;
+            case "clickable":
+                view.setClickable(Boolean.valueOf(value));
+                break;
+            case "contentDescription":
+                view.setContentDescription(Strings.parse(view, value));
+                break;
+            case "contextClickable":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setContextClickable(Boolean.valueOf(value));
+                }
+                break;
+            case "defaultFocusHighlightEnabled":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    view.setDefaultFocusHighlightEnabled(Boolean.valueOf(value));
+                }
+                break;
+            case "drawingCacheQuality":
+                view.setDrawingCacheQuality(DRAWABLE_CACHE_QUALITIES.get(value));
+                break;
+            case "duplicateParentState":
+                view.setDuplicateParentStateEnabled(Boolean.valueOf(value));
+                break;
+            case "elevation":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.setElevation(Dimensions.parseToIntPixel(value, view));
+                }
+                break;
+            case "fadeScrollbars":
+                view.setScrollbarFadingEnabled(Boolean.valueOf(value));
+                break;
+            case "fadingEdgeLength":
+                view.setFadingEdgeLength(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "filterTouchesWhenObscured":
+                view.setFilterTouchesWhenObscured(Boolean.valueOf(value));
+                break;
+            case "fitsSystemWindows":
+                view.setFitsSystemWindows(Boolean.valueOf(value));
+                break;
+            case "focusable":
+                view.setFocusable(Boolean.valueOf(value));
+                break;
+            case "focusableInTouchMode":
+                view.setFocusableInTouchMode(Boolean.valueOf(value));
+                break;
+            case "focusedByDefault":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    view.setFocusedByDefault(Boolean.valueOf(value));
+                }
+                break;
+            case "forceHasOverlappingRendering":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    view.forceHasOverlappingRendering(Boolean.valueOf(value));
+                }
+                break;
+            case "foreground":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setForeground(Drawables.parse(view, value));
+                }
+                break;
+            case "foregroundGravity":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setForegroundGravity(Gravities.parse(value));
+                }
+                break;
+            case "foregroundTint":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setForegroundTintList(ColorStateList.valueOf(Colors.parse(view, value)));
+                }
+                break;
+            case "foregroundTintMode":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setForegroundTintMode(TINT_MODES.get(value));
+                }
+                break;
+            case "hapticFeedbackEnabled":
+                view.setHapticFeedbackEnabled(Boolean.valueOf(value));
+                break;
+            case "importantForAccessibility":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY.get(value));
+                }
+                break;
+            case "importantForAutofill":
+                Util.unsupports(view, attr, value);
+                break;
+            case "isScrollContainer":
+                view.setScrollContainer(Boolean.valueOf(value));
+                break;
+            case "keepScreenOn":
+                view.setKeepScreenOn(Boolean.valueOf(value));
+                break;
+            case "keyboardNavigationCluster":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    view.setKeyboardNavigationCluster(Boolean.valueOf(value));
+                }
+                break;
+            case "layerType":
+                Util.unsupports(view, attr, value);
+                break;
+            case "layoutDirection":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    view.setLayoutDirection(LAYOUT_DIRECTIONS.get(value));
+                }
+                break;
+            case "longClickable":
+                view.setLongClickable(Boolean.valueOf(value));
+                break;
+            case "minHeight":
+                view.setMinimumHeight(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "minWidth":
+                view.setMinimumWidth(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "nextClusterForward":
+                Util.unsupports(view, attr, value);
+                break;
+            case "nextFocusDown":
+                Util.unsupports(view, attr, value);
+                break;
+            case "nextFocusForward":
+                Util.unsupports(view, attr, value);
+                break;
+            case "nextFocusLeft":
+                Util.unsupports(view, attr, value);
+                break;
+            case "nextFocusRight":
+                Util.unsupports(view, attr, value);
+                break;
+            case "nextFocusUp":
+                Util.unsupports(view, attr, value);
+                break;
+            case "onClick":
+                Util.unsupports(view, attr, value);
+                break;
+            case "paddingEnd":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(),
+                            Dimensions.parseToIntPixel(value, view), view.getPaddingBottom());
+                }
+                break;
+            case "paddingHorizontal":
+            case "paddingVertical":
+                Util.unsupports(view, attr, value);
+                break;
+            case "paddingStart":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    view.setPaddingRelative(Dimensions.parseToIntPixel(value, view), view.getPaddingTop(),
+                            view.getPaddingEnd(), view.getPaddingBottom());
+                }
+                break;
+            case "requiresFadingEdge":
+                for (String str : value.split("|")) {
+                    if (str.equals("horizontal")) {
+                        view.setHorizontalFadingEdgeEnabled(true);
+                    } else if (str.equals("vertical")) {
+                        view.setVerticalFadingEdgeEnabled(true);
+                    }
+                }
+                break;
+            case "rotation":
+                view.setRotation(Dimensions.parseToPixel(value, view));
+                break;
+            case "rotationX":
+                view.setRotationX(Dimensions.parseToPixel(value, view));
+                break;
+            case "rotationY":
+                view.setRotationY(Dimensions.parseToPixel(value, view));
+                break;
+            case "saveEnabled":
+                view.setSaveEnabled(Boolean.valueOf(value));
+                break;
+            case "scaleX":
+                view.setScaleX(Dimensions.parseToPixel(value, view));
+                break;
+            case "scaleY":
+                view.setScaleY(Dimensions.parseToPixel(value, view));
+                break;
+            case "scrollIndicators":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setScrollIndicators(SCROLL_INDICATORS.get(value));
+                }
+                break;
+            case "scrollX":
+                view.setScrollX(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "scrollY":
+                view.setScrollY(Dimensions.parseToIntPixel(value, view));
+                break;
+            case "scrollbarAlwaysDrawHorizontalTrack":
+            case "scrollbarAlwaysDrawVerticalTrack":
+                Util.unsupports(view, attr, value);
+                break;
+            case "scrollbarDefaultDelayBeforeFade":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setScrollBarDefaultDelayBeforeFade(Integer.valueOf(value));
+                }
+                break;
+            case "scrollbarFadeDuration":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setScrollBarFadeDuration(Integer.valueOf(value));
+                }
+                break;
+            case "scrollbarSize":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setScrollBarSize(Dimensions.parseToIntPixel(value, view));
+                }
+                break;
+            case "scrollbarStyle":
+                view.setScrollBarStyle(SCROLLBARS_STYLES.get(value));
+                break;
+            case "scrollbarThumbHorizontal":
+            case "scrollbarThumbVertical":
+            case "scrollbarTrackHorizontal":
+            case "scrollbarTrackVertical":
+                Util.unsupports(view, attr, value);
+            case "scrollbars":
+                for (String str : value.split("|")) {
+                    if (str.equals("horizontal")) {
+                        view.setHorizontalScrollBarEnabled(true);
+                    } else if (str.equals("vertical")) {
+                        view.setVerticalScrollBarEnabled(true);
+                    }
+                }
+                break;
+            case "soundEffectsEnabled":
+                view.setSoundEffectsEnabled(Boolean.valueOf(value));
+                break;
+            case "stateListAnimator":
+                Util.unsupports(view, attr, value);
+            case "tag":
+                view.setTag(Strings.parse(view, value));
+                break;
+            case "textAlignment":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    view.setTextAlignment(TEXT_ALIGNMENTS.get(value));
+                }
+                break;
+            case "textDirection":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    view.setTextDirection(TEXT_DIRECTIONS.get(value));
+                }
+                break;
+            case "theme":
+                Util.unsupports(view, attr, value);
+                break;
+            case "tooltipText":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    view.setTooltipText(Strings.parse(view, value));
+                }
+                break;
+            case "transformPivotX":
+                view.setPivotX(Dimensions.parseToPixel(value, view));
+                break;
+            case "transformPivotY":
+                view.setPivotY(Dimensions.parseToPixel(value, view));
+                break;
+            case "transitionName":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.setTransitionName(Strings.parse(view, value));
+                }
+                break;
+            case "translationX":
+                view.setTranslationX(Dimensions.parseToPixel(value, view));
+                break;
+            case "translationY":
+                view.setTranslationY(Dimensions.parseToPixel(value, view));
+                break;
+            case "translationZ":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    view.setTranslationZ(Dimensions.parseToPixel(value, view));
+                }
+                break;
+            case "visibility":
+                view.setVisibility(VISIBILITY.get(value));
+                break;
             default:
                 return false;
 
@@ -204,5 +561,10 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             }
         }
         return true;
+    }
+
+    @Override
+    public void applyPendingAttributes() {
+
     }
 }

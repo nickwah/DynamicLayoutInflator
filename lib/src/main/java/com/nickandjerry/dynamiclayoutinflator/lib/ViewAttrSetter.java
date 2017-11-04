@@ -12,4 +12,6 @@ import java.util.Map;
 
 public interface ViewAttrSetter<V extends View> {
     boolean setAttr(V view, String attrName, String value, ViewGroup parent, Map<String, String> attrs);
+
+    void applyPendingAttributes();
 }

@@ -6,6 +6,14 @@ import android.util.Log;
 import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ImageViewAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.LinearLayoutAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -48,40 +56,40 @@ import javax.xml.parsers.DocumentBuilderFactory;
  */
 public class DynamicLayoutInflater {
     private static final String LOG_TAG = "DynamicLayoutInflater";
-    private static final int NO_LAYOUT_RULE = Integer.MIN_VALUE;
-    private static final String[] CORNERS = {"TopLeft", "TopRight", "BottomRight", "BottomLeft"};
 
-    private Map<String, ViewAttrSetter<View>> mViewAttrSetters;
-    private int highestIdNumberUsed = 1234567;
-    private ImageLoader mImageLoader = null;
+    private Map<String, ViewAttrSetter<? extends View>> mViewAttrSetters = new HashMap<>();
     private Context mContext;
 
-    public void setImageLoader(ImageLoader loader) {
-        mImageLoader = loader;
+    public DynamicLayoutInflater(Context context) {
+        mContext = context;
+        mViewAttrSetters.put(TextView.class.getName(), new TextViewAttrSetter<>());
+        mViewAttrSetters.put(ImageView.class.getName(), new ImageViewAttrSetter<>());
+        mViewAttrSetters.put(LinearLayout.class.getName(), new LinearLayoutAttrSetter<>());
+        mViewAttrSetters.put(View.class.getName(), new BaseViewAttrSetter<>());
+
     }
 
-
-    public View inflate(Context context, String xml) {
+    public View inflate(String xml) {
         InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
-        return inflate(context, inputStream);
+        return inflate(inputStream);
     }
 
-    public View inflate(Context context, String xml, ViewGroup parent) {
+    public View inflate(String xml, ViewGroup parent) {
         InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
-        return inflate(context, inputStream, parent);
+        return inflate(inputStream, parent);
     }
 
-    public View inflate(Context context, InputStream inputStream) {
-        return inflate(context, inputStream, null);
+    public View inflate(InputStream inputStream) {
+        return inflate(inputStream, null);
     }
 
-    public View inflate(Context context, InputStream inputStream, ViewGroup parent) {
+    public View inflate(InputStream inputStream, ViewGroup parent) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setNamespaceAware(true);
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document document = db.parse(inputStream);
-            return inflate(context, document.getDocumentElement(), parent);
+            return inflate(document.getDocumentElement(), parent);
         } catch (Exception e) {
             throw new InflateException(e);
         } finally {
@@ -93,35 +101,35 @@ public class DynamicLayoutInflater {
         }
     }
 
-    private View inflate(Context context, Node node, ViewGroup parent) {
-        View mainView = createViewForName(context, node.getNodeName());
+    private View inflate(Node node, ViewGroup parent) {
+        View mainView = createViewForName(node.getNodeName());
         if (parent != null) {
             parent.addView(mainView); // have to add to parent to enable certain layout attrs
         }
         applyAttributes(mainView, getAttributesMap(node), parent);
         if (mainView instanceof ViewGroup && node.hasChildNodes()) {
-            inflateChildren(context, node, (ViewGroup) mainView);
+            inflateChildren(node, (ViewGroup) mainView);
         }
         return mainView;
     }
 
-    private void inflateChildren(Context context, Node node, ViewGroup mainView) {
+    private void inflateChildren(Node node, ViewGroup mainView) {
         NodeList nodeList = node.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node currentNode = nodeList.item(i);
             if (currentNode.getNodeType() != Node.ELEMENT_NODE) continue;
-            inflate(context, currentNode, mainView); // this recursively can call inflateChildren
+            inflate(currentNode, mainView); // this recursively can call inflateChildren
         }
     }
 
-    private View createViewForName(Context context, String name) {
+    private View createViewForName(String name) {
         try {
             if (!name.contains(".")) {
                 name = "android.widget." + name;
             }
             Class<?> clazz = Class.forName(name);
             Constructor<?> constructor = clazz.getConstructor(Context.class);
-            return (View) constructor.newInstance(context);
+            return (View) constructor.newInstance(mContext);
         } catch (Exception e) {
             throw new InflateException(e);
         }
@@ -140,25 +148,23 @@ public class DynamicLayoutInflater {
         return attributes;
     }
 
+    @SuppressWarnings("unchecked")
     private void applyAttributes(View view, Map<String, String> attrs, ViewGroup parent) {
-        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        int marginLeft = 0, marginRight = 0, marginTop = 0, marginBottom = 0,
-                paddingLeft = 0, paddingRight = 0, paddingTop = 0, paddingBottom = 0;
-        for (Map.Entry<String, String> entry : attrs.entrySet()) {
-            String attr = entry.getKey();
-            ViewAttrSetter<View> setter = mViewAttrSetters.get(view.getClass().getName());
-            if (setter != null) {
+        ViewAttrSetter<View> setter = (ViewAttrSetter<View>) mViewAttrSetters.get(view.getClass().getName());
+        Class c = view.getClass();
+        while (setter == null && c != View.class) {
+            c = c.getSuperclass();
+            setter = (ViewAttrSetter<View>) mViewAttrSetters.get(c.getName());
+        }
+        if (setter != null) {
+            for (Map.Entry<String, String> entry : attrs.entrySet()) {
+                String attr = entry.getKey();
                 setter.setAttr(view, attr, entry.getValue(), parent, attrs);
-            } else {
-                Log.e(LOG_TAG, "cannot set attributes for view: " + view.getClass());
             }
+        } else {
+            Log.e(LOG_TAG, "cannot set attributes for view: " + view.getClass());
         }
-        if (layoutParams instanceof ViewGroup.MarginLayoutParams) {
-            ((ViewGroup.MarginLayoutParams) layoutParams)
-                    .setMargins(marginLeft, marginTop, marginRight, marginBottom);
-        }
-        view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-        view.setLayoutParams(layoutParams);
+
     }
 
 
