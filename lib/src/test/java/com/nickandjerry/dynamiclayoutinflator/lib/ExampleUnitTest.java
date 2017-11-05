@@ -23,15 +23,13 @@ public class ExampleUnitTest {
         byte[] bytes = new byte[fileInputStream.available()];
         fileInputStream.read(bytes);
         String str = new String(bytes);
-        Matcher matcher = Pattern.compile("case \"(\\w+)\":").matcher(str);
+        Matcher matcher = Pattern.compile("android:(\\w+)").matcher(str);
         StringBuffer output = new StringBuffer();
         while (matcher.find()) {
-            String rep =
-                    String.format("%s\nview.set%s(value);",
-                            matcher.group(), up(matcher.group(1)));
-            matcher.appendReplacement(output, rep);
+            String p = matcher.group(1);
+            output.append("case \"").append(p).append("\":\nview.set")
+                    .append(up(p)).append("(Boolean.valueOf(value));\n");
         }
-        matcher.appendTail(output);
         System.out.println(output);
     }
 

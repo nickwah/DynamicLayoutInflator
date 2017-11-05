@@ -221,6 +221,76 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
             case "marqueeRepeatLimit":
                 view.setMarqueeRepeatLimit(value.equals("marquee_forever") ? Integer.MAX_VALUE : Integer.valueOf(value));
                 break;
+            case "maxEms":
+                view.setMaxEms(Integer.valueOf(value));
+            case "maxHeight":
+                view.setMaxHeight(Integer.valueOf(value));
+            case "maxLength":
+                view.setMaxLe(Integer.valueOf(value));
+            case "maxLines":
+                view.setMaxLines(Integer.valueOf(value));
+            case "maxWidth":
+                view.setMaxWidth(Integer.valueOf(value));
+            case "minEms":
+                view.setMinEms(Integer.valueOf(value));
+            case "minHeight":
+                view.setMinHeight(Dimensions.parseToIntPixel(value, view));
+            case "minLines":
+                view.setMinLines(Integer.valueOf(value));
+            case "minWidth":
+                view.setMinWidth(Dimensions.parseToIntPixel(value, view));
+            case "numeric":
+                if(value.equals("true")){
+                    view.setInputType(view.getInputType() | InputType.TYPE_CLASS_NUMER);
+                }
+            case "password":
+                if(value.equals("true")){
+                    view.setInputType(view.getInputType() | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                }
+                break;
+            case "phoneNumber":
+                if(value.equals("true")){
+                    view.setInputType(view.getInputType() | InputType.TYPE_TEXT_VARIATION_PHONETIC);
+                }
+                break;
+            case "privateImeOptions":
+                view.setPrivateImeOptions(Boolean.valueOf(value));
+            case "scrollHorizontally":
+                view.setScrollHorizontally(Boolean.valueOf(value));
+            case "selectAllOnFocus":
+                view.setSelectAllOnFocus(Boolean.valueOf(value));
+            case "shadowColor":
+                view.setShadowColor(Boolean.valueOf(value));
+            case "shadowDx":
+                view.setShadowDx(Boolean.valueOf(value));
+            case "shadowDy":
+                view.setShadowDy(Boolean.valueOf(value));
+            case "shadowRadius":
+                view.setShadowRadius(Boolean.valueOf(value));
+            case "singleLine":
+                view.setSingleLine(Boolean.valueOf(value));
+            case "textAllCaps":
+                view.setAllCaps(Boolean.valueOf(value));
+            case "textAppearance":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    view.setTextAppearance(Boolean.valueOf(value));
+                }
+            case "textColorHighlight":
+                view.setHighlightColor(Colors.parse(view, value));
+            case "textColorHint":
+                view.setHintTextColor(Colors.parse(view, value));
+            case "textColorLink":
+                view.setLinkTextColor(Colors.parse(view, value));
+            case "textIsSelectable":
+                view.setTextIsSelectable(Boolean.valueOf(value));
+            case "textScaleX":
+                view.setTextScaleX(Dimensions.parseToPixel(value, view));
+            case "textStyle":
+                view.setTextStyle(Boolean.valueOf(value));
+            case "typeface":
+                view.setTypeface(Boolean.valueOf(value));
+            case "width":
+                view.setWidth(Dimensions.parseToIntPixel(value, view));
             case "text":
                 view.setText(Strings.parse(view, value));
                 break;
