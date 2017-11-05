@@ -3,6 +3,7 @@ package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Build;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -18,6 +19,11 @@ import com.nickandjerry.dynamiclayoutinflator.lib.util.Ids;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Strings;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.ValueMapper;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -94,6 +100,8 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             case "id":
                 view.setId(Ids.getIdFromName(value));
                 break;
+            case "gravity":
+                return setGravity(view, value);
             case "width":
             case "layout_width":
                 switch (value) {
@@ -236,13 +244,13 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 view.setPadding(Dimensions.parseToIntPixel(value, view), view.getPaddingTop(), view.getPaddingRight(), view.getPaddingBottom());
                 break;
             case "paddingTop":
-                view.setPadding(view.getLeft(), Dimensions.parseToIntPixel(value, view), view.getPaddingRight(), view.getPaddingBottom());
+                view.setPadding(view.getPaddingLeft(), Dimensions.parseToIntPixel(value, view), view.getPaddingRight(), view.getPaddingBottom());
                 break;
             case "paddingRight":
-                view.setPadding(view.getLeft(), view.getPaddingTop(), Dimensions.parseToIntPixel(value, view), view.getPaddingBottom());
+                view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), Dimensions.parseToIntPixel(value, view), view.getPaddingBottom());
                 break;
             case "paddingBottom":
-                view.setPadding(view.getLeft(), view.getPaddingTop(), view.getPaddingRight(), Dimensions.parseToIntPixel(value, view));
+                view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), view.getPaddingRight(), Dimensions.parseToIntPixel(value, view));
                 break;
             case "background":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -411,6 +419,9 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                     view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(),
                             Dimensions.parseToIntPixel(value, view), view.getPaddingBottom());
+                } else {
+                    view.setPadding(view.getPaddingLeft(), view.getPaddingTop(),
+                            Dimensions.parseToIntPixel(value, view), view.getPaddingBottom());
                 }
                 break;
             case "paddingHorizontal":
@@ -421,6 +432,9 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                     view.setPaddingRelative(Dimensions.parseToIntPixel(value, view), view.getPaddingTop(),
                             view.getPaddingEnd(), view.getPaddingBottom());
+                } else {
+                    view.setPadding(Dimensions.parseToIntPixel(value, view), view.getPaddingTop(),
+                            view.getPaddingRight(), view.getPaddingBottom());
                 }
                 break;
             case "requiresFadingEdge":
@@ -516,7 +530,8 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 }
                 break;
             case "theme":
-                Util.unsupports(view, attr, value);
+                //Util.unsupports(view, attr, value);
+
                 break;
             case "tooltipText":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -563,8 +578,23 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
         return true;
     }
 
+    private boolean setGravity(V view, String g) {
+        // FIXME: 2017/11/5 FrameLayout must set layout_gravity to each child
+        try {
+            Method setGravity = view.getClass().getMethod("setGravity", int.class);
+            setGravity.invoke(view, Gravities.parse(g));
+            return true;
+        } catch (Exception e) {
+            if (view instanceof FrameLayout) {
+                Util.unsupports(view, "gravity", g);
+            }
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     @Override
-    public void applyPendingAttributes() {
+    public void applyPendingAttributes(V view, ViewGroup parent) {
 
     }
 }

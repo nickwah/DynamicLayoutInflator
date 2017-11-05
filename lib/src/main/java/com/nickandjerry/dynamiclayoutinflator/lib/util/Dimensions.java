@@ -1,5 +1,8 @@
 package com.nickandjerry.dynamiclayoutinflator.lib.util;
 
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -31,36 +34,44 @@ public class Dimensions {
             .map("mm", TypedValue.COMPLEX_UNIT_MM);
 
 
-    private static final Pattern DIMENSION_PATTERN = Pattern.compile("([0-9.]+)([a-zA-Z]*)");
+    private static final Pattern DIMENSION_PATTERN = Pattern.compile("([+-]?[0-9.]+)([a-zA-Z]*)");
 
     public static int parseToPixel(String dimension, DisplayMetrics metrics, ViewGroup parent, boolean horizontal) {
         if (dimension.endsWith("%")) {
             float pct = Float.parseFloat(dimension.substring(0, dimension.length() - 1)) / 100.0f;
             return (int) (pct * (horizontal ? parent.getMeasuredWidth() : parent.getMeasuredHeight()));
         }
-        return parseToIntPixel(dimension, metrics);
+        return parseToIntPixel(dimension, parent.getContext());
     }
 
     public static float parseToPixel(String dimension, View view) {
-        return parseToPixel(dimension, view.getResources().getDisplayMetrics());
+        return parseToPixel(dimension, view.getContext());
     }
 
-    public static float parseToPixel(String dimension, DisplayMetrics metrics) {
+    public static float parseToPixel(String dimension, Context context) {
+        if (dimension.startsWith("?")) {
+            int[] attr = {context.getResources().getIdentifier(dimension.substring(1), "attr",
+                    context.getPackageName())};
+            TypedArray ta = context.obtainStyledAttributes(attr);
+            float d = ta.getDimension(0, 0);
+            ta.recycle();
+            return d;
+        }
         Matcher m = DIMENSION_PATTERN.matcher(dimension);
         if (!m.matches()) {
             throw new InflateException("dimension cannot be resolved: " + dimension);
         }
         int unit = m.groupCount() == 2 ? UNITS.get(m.group(2)) : TypedValue.COMPLEX_UNIT_PX;
         float value = Integer.valueOf(m.group(1));
-        return TypedValue.applyDimension(unit, value, metrics);
+        return TypedValue.applyDimension(unit, value, context.getResources().getDisplayMetrics());
     }
 
     public static int parseToIntPixel(String value, View view) {
         return Math.round(parseToPixel(value, view));
     }
 
-    public static int parseToIntPixel(String value, DisplayMetrics metrics) {
-        return Math.round(parseToPixel(value, metrics));
+    public static int parseToIntPixel(String value, Context context) {
+        return Math.round(parseToPixel(value, context));
     }
 }
 

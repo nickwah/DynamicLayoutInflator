@@ -32,7 +32,7 @@ public class ValueMapper<V> {
 
     public int split(String str){
         int r = 0;
-        for(String s : str.split("|")){
+        for(String s : str.split("\\|")){
             r |= (Integer) get(s);
         }
         return r;

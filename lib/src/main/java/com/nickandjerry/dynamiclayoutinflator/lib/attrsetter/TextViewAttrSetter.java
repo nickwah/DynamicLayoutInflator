@@ -1,10 +1,13 @@
 package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
+import android.text.method.TextKeyListener;
 import android.text.util.Linkify;
 import android.util.TypedValue;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import com.nickandjerry.dynamiclayoutinflator.lib.util.Colors;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Dimensions;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Drawables;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Gravities;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.Res;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Strings;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.ValueMapper;
 
@@ -89,16 +93,34 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
             .map("textWebPassword", 0xe1)
             .map("time", 0x24);
 
+    private static final ValueMapper<Integer> INPUT_TYPE_NUMERIC = new ValueMapper<Integer>("numeric")
+            .map("decimal", InputType.TYPE_NUMBER_FLAG_DECIMAL)
+            .map("number", InputType.TYPE_CLASS_NUMBER)
+            .map("signed", InputType.TYPE_NUMBER_FLAG_SIGNED);
+
+    private static final ValueMapper<Integer> TEXT_STYLES = new ValueMapper<Integer>("textStyle")
+            .map("bold", Typeface.BOLD)
+            .map("italic", Typeface.ITALIC)
+            .map("normal", Typeface.NORMAL);
+
+    private static final ValueMapper<TextKeyListener.Capitalize> CAPITALIZE = new ValueMapper<TextKeyListener.Capitalize>("capitalize")
+            .map("characters", TextKeyListener.Capitalize.CHARACTERS)
+            .map("none", TextKeyListener.Capitalize.NONE)
+            .map("sentences", TextKeyListener.Capitalize.SENTENCES)
+            .map("words", TextKeyListener.Capitalize.WORDS);
+
 
     private boolean mAutoText;
-    private String mCapitalize;
-    private String mFontFamily;
+    private TextKeyListener.Capitalize mCapitalize;
     private Drawable mDrawableBottom;
     private Drawable mDrawableRight;
     private Drawable mDrawableTop;
     private Drawable mDrawableLeft;
-    private int mLineSpacingExtra;
-    private int mLineSpacingMultiplier;
+    private Integer mLineSpacingExtra;
+    private Integer mLineSpacingMultiplier;
+    private String mFontFamily;
+    private Integer mTextStyle;
+    private String mTypeface;
 
     @Override
     public boolean setAttr(V view, String attrName, String value, ViewGroup parent, Map<String, String> attrs) {
@@ -113,7 +135,7 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
                 mAutoText = Boolean.valueOf(value);
                 break;
             case "capitalize":
-                mCapitalize = value;
+                mCapitalize = CAPITALIZE.get(value);
                 break;
             case "cursorVisible":
                 view.setCursorVisible(Boolean.valueOf(value));
@@ -173,9 +195,6 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
             case "gravity":
                 view.setGravity(Gravities.parse(value));
                 break;
-            case "height":
-                view.setHeight(Dimensions.parseToIntPixel(value, view));
-                break;
             case "hint":
                 view.setHint(Strings.parse(view, value));
                 break;
@@ -199,7 +218,7 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
             case "inputMethod":
                 Util.unsupports(view, attrName, value);
             case "inputType":
-                view.setRawInputType(INPUT_TYPES.split(value));
+                view.setInputType(INPUT_TYPES.split(value));
                 break;
             case "letterSpacing":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -207,10 +226,18 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
                 }
                 break;
             case "lineSpacingExtra":
-                mLineSpacingExtra = Dimensions.parseToIntPixel(value, view);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setLineSpacing(Dimensions.parseToIntPixel(value, view), view.getLineSpacingMultiplier());
+                } else {
+                    mLineSpacingExtra = Dimensions.parseToIntPixel(value, view);
+                }
                 break;
             case "lineSpacingMultiplier":
-                mLineSpacingMultiplier = Dimensions.parseToIntPixel(value, view);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setLineSpacing(view.getLineSpacingExtra(), Dimensions.parseToIntPixel(value, view));
+                } else {
+                    mLineSpacingMultiplier = Dimensions.parseToIntPixel(value, view);
+                }
                 break;
             case "lines":
                 view.setLines(Integer.valueOf(value));
@@ -223,74 +250,105 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
                 break;
             case "maxEms":
                 view.setMaxEms(Integer.valueOf(value));
+                break;
             case "maxHeight":
                 view.setMaxHeight(Integer.valueOf(value));
+                break;
             case "maxLength":
-                view.setMaxLe(Integer.valueOf(value));
+                view.setFilters(new InputFilter[]{new InputFilter.LengthFilter(Integer.valueOf(value))});
+                break;
             case "maxLines":
                 view.setMaxLines(Integer.valueOf(value));
+                break;
             case "maxWidth":
                 view.setMaxWidth(Integer.valueOf(value));
+                break;
             case "minEms":
                 view.setMinEms(Integer.valueOf(value));
+                break;
             case "minHeight":
                 view.setMinHeight(Dimensions.parseToIntPixel(value, view));
+                break;
             case "minLines":
                 view.setMinLines(Integer.valueOf(value));
+                break;
             case "minWidth":
                 view.setMinWidth(Dimensions.parseToIntPixel(value, view));
+                break;
             case "numeric":
-                if(value.equals("true")){
-                    view.setInputType(view.getInputType() | InputType.TYPE_CLASS_NUMER);
-                }
+                view.setInputType(INPUT_TYPE_NUMERIC.split(value) | InputType.TYPE_CLASS_NUMBER);
+                break;
             case "password":
-                if(value.equals("true")){
+                if (value.equals("true")) {
                     view.setInputType(view.getInputType() | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 }
                 break;
             case "phoneNumber":
-                if(value.equals("true")){
+                if (value.equals("true")) {
                     view.setInputType(view.getInputType() | InputType.TYPE_TEXT_VARIATION_PHONETIC);
                 }
                 break;
             case "privateImeOptions":
-                view.setPrivateImeOptions(Boolean.valueOf(value));
+                view.setPrivateImeOptions(Strings.parse(view, value));
+                break;
             case "scrollHorizontally":
-                view.setScrollHorizontally(Boolean.valueOf(value));
+                view.setHorizontallyScrolling(Boolean.valueOf(value));
+                break;
             case "selectAllOnFocus":
                 view.setSelectAllOnFocus(Boolean.valueOf(value));
+                break;
             case "shadowColor":
-                view.setShadowColor(Boolean.valueOf(value));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setShadowLayer(view.getShadowRadius(), view.getShadowDx(), view.getShadowDy(), Colors.parse(view, value));
+                }
+                break;
             case "shadowDx":
-                view.setShadowDx(Boolean.valueOf(value));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setShadowLayer(view.getShadowRadius(), Dimensions.parseToPixel(value, view), view.getShadowDy(), view.getShadowColor());
+                }
+                break;
             case "shadowDy":
-                view.setShadowDy(Boolean.valueOf(value));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setShadowLayer(view.getShadowRadius(), view.getShadowDx(), Dimensions.parseToPixel(value, view), view.getShadowColor());
+                }
+                break;
             case "shadowRadius":
-                view.setShadowRadius(Boolean.valueOf(value));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setShadowLayer(Dimensions.parseToPixel(value, view), view.getShadowDx(), view.getShadowDy(), view.getShadowColor());
+                }
+                break;
             case "singleLine":
                 view.setSingleLine(Boolean.valueOf(value));
+                break;
             case "textAllCaps":
                 view.setAllCaps(Boolean.valueOf(value));
+                break;
             case "textAppearance":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    view.setTextAppearance(Boolean.valueOf(value));
+                    view.setTextAppearance(Res.parseStyle(view, value));
                 }
+                break;
             case "textColorHighlight":
                 view.setHighlightColor(Colors.parse(view, value));
+                break;
             case "textColorHint":
                 view.setHintTextColor(Colors.parse(view, value));
+                break;
             case "textColorLink":
                 view.setLinkTextColor(Colors.parse(view, value));
+                break;
             case "textIsSelectable":
                 view.setTextIsSelectable(Boolean.valueOf(value));
+                break;
             case "textScaleX":
                 view.setTextScaleX(Dimensions.parseToPixel(value, view));
+                break;
             case "textStyle":
-                view.setTextStyle(Boolean.valueOf(value));
+                mTextStyle = TEXT_STYLES.get(value);
+                break;
             case "typeface":
-                view.setTypeface(Boolean.valueOf(value));
-            case "width":
-                view.setWidth(Dimensions.parseToIntPixel(value, view));
+                mTypeface = value;
+                break;
             case "text":
                 view.setText(Strings.parse(view, value));
                 break;
@@ -304,5 +362,59 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
                 return false;
         }
         return true;
+    }
+
+    @Override
+    public void applyPendingAttributes(V view, ViewGroup parent) {
+        setTypeface(view);
+        setLineSpacing(view);
+        setDrawables(view);
+        setKeyListener(view);
+    }
+
+    private void setKeyListener(V view) {
+        if (mCapitalize != null) {
+            view.setKeyListener(TextKeyListener.getInstance(mAutoText, mCapitalize));
+        }
+        mCapitalize = null;
+        mAutoText = false;
+    }
+
+    private void setDrawables(V view) {
+        Drawable[] drawables = view.getCompoundDrawables();
+        view.setCompoundDrawables(
+                mDrawableLeft != null ? mDrawableLeft : drawables[0],
+                mDrawableTop != null ? mDrawableTop : drawables[1],
+                mDrawableRight != null ? mDrawableRight : drawables[2],
+                mDrawableBottom != null ? mDrawableBottom : drawables[3]
+        );
+        mDrawableLeft = mDrawableBottom = mDrawableRight = mDrawableTop = null;
+    }
+
+    private void setLineSpacing(V view) {
+        if (mLineSpacingExtra != null) {
+            view.setLineSpacing(mLineSpacingExtra, mLineSpacingMultiplier == null ? 1 : mLineSpacingMultiplier);
+        } else if (mLineSpacingMultiplier != null) {
+            view.setLineSpacing(0, mLineSpacingMultiplier);
+        }
+        mLineSpacingMultiplier = mLineSpacingExtra = null;
+    }
+
+    private void setTypeface(V view) {
+        if (mFontFamily != null) {
+            //ignore typeface as android does
+            mTypeface = mFontFamily;
+        }
+        if (mTypeface != null) {
+            if (mTextStyle != null) {
+                view.setTypeface(Typeface.create(mTypeface, mTextStyle));
+            } else {
+                view.setTypeface(Typeface.create(mTypeface, view.getTypeface().getStyle()));
+            }
+        } else if (mTextStyle != null) {
+            view.setTypeface(view.getTypeface(), mTextStyle);
+        }
+        mTypeface = mFontFamily = null;
+        mTextStyle = null;
     }
 }

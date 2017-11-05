@@ -2,10 +2,12 @@ package com.nickandjerry.dynamiclayoutinflator.lib;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -14,6 +16,7 @@ import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ImageViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.LinearLayoutAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.util.Res;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -63,6 +66,7 @@ public class DynamicLayoutInflater {
     public DynamicLayoutInflater(Context context) {
         mContext = context;
         mViewAttrSetters.put(TextView.class.getName(), new TextViewAttrSetter<>());
+        mViewAttrSetters.put(EditText.class.getName(), new TextViewAttrSetter<>());
         mViewAttrSetters.put(ImageView.class.getName(), new ImageViewAttrSetter<>());
         mViewAttrSetters.put(LinearLayout.class.getName(), new LinearLayoutAttrSetter<>());
         mViewAttrSetters.put(View.class.getName(), new BaseViewAttrSetter<>());
@@ -102,34 +106,45 @@ public class DynamicLayoutInflater {
     }
 
     private View inflate(Node node, ViewGroup parent) {
-        View mainView = createViewForName(node.getNodeName());
+        HashMap<String, String> attrs = getAttributesMap(node);
+        View view = createViewForName(node.getNodeName(), attrs);
         if (parent != null) {
-            parent.addView(mainView); // have to add to parent to enable certain layout attrs
+            parent.addView(view); // have to add to parent to enable certain layout attrs
         }
-        applyAttributes(mainView, getAttributesMap(node), parent);
-        if (mainView instanceof ViewGroup && node.hasChildNodes()) {
-            inflateChildren(node, (ViewGroup) mainView);
+        applyAttributes(view, attrs, parent);
+        if (view instanceof ViewGroup && node.hasChildNodes()) {
+            inflateChildren(node, (ViewGroup) view);
         }
-        return mainView;
+        return view;
     }
 
-    private void inflateChildren(Node node, ViewGroup mainView) {
+    private void inflateChildren(Node node, ViewGroup parent) {
         NodeList nodeList = node.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node currentNode = nodeList.item(i);
             if (currentNode.getNodeType() != Node.ELEMENT_NODE) continue;
-            inflate(currentNode, mainView); // this recursively can call inflateChildren
+            inflate(currentNode, parent); // this recursively can call inflateChildren
         }
     }
 
-    private View createViewForName(String name) {
+    private View createViewForName(String name, HashMap<String, String> attrs) {
         try {
+            if (name.equals("View")) {
+                return new View(mContext);
+            }
             if (!name.contains(".")) {
                 name = "android.widget." + name;
             }
             Class<?> clazz = Class.forName(name);
-            Constructor<?> constructor = clazz.getConstructor(Context.class);
-            return (View) constructor.newInstance(mContext);
+            String style = attrs.get("style");
+            if (style == null) {
+                return (View) clazz.getConstructor(Context.class).newInstance(mContext);
+            } else {
+                // FIXME: 2017/11/5 not working
+                int styleRes = Res.parseStyle(mContext, style);
+                return (View) clazz.getConstructor(Context.class, AttributeSet.class, int.class)
+                        .newInstance(mContext, null, styleRes);
+            }
         } catch (Exception e) {
             throw new InflateException(e);
         }
@@ -161,6 +176,7 @@ public class DynamicLayoutInflater {
                 String attr = entry.getKey();
                 setter.setAttr(view, attr, entry.getValue(), parent, attrs);
             }
+            setter.applyPendingAttributes(view, parent);
         } else {
             Log.e(LOG_TAG, "cannot set attributes for view: " + view.getClass());
         }

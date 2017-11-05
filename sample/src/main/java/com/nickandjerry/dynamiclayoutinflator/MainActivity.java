@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        FrameLayout main = (FrameLayout) findViewById(R.id.main_top);
+        FrameLayout main = findViewById(R.id.main_top);
         DynamicLayoutInflater inflater = new DynamicLayoutInflater(this);
         try {
             inflater.inflate(getAssets().open("testlayout.xml"), main);
