@@ -2,6 +2,7 @@ package com.nickandjerry.dynamiclayoutinflator.lib;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.InflateException;
@@ -16,6 +17,7 @@ import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ImageViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.LinearLayoutAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ToolbarAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Res;
 
 import org.w3c.dom.Document;
@@ -70,6 +72,7 @@ public class DynamicLayoutInflater {
         mViewAttrSetters.put(ImageView.class.getName(), new ImageViewAttrSetter<>());
         mViewAttrSetters.put(LinearLayout.class.getName(), new LinearLayoutAttrSetter<>());
         mViewAttrSetters.put(View.class.getName(), new BaseViewAttrSetter<>());
+        mViewAttrSetters.put(Toolbar.class.getName(), new ToolbarAttrSetter<>());
 
     }
 
@@ -157,7 +160,6 @@ public class DynamicLayoutInflater {
         for (int j = 0; j < attributeCount; j++) {
             Node attr = attributeMap.item(j);
             String nodeName = attr.getNodeName();
-            if (nodeName.startsWith("android:")) nodeName = nodeName.substring(8);
             attributes.put(nodeName, attr.getNodeValue());
         }
         return attributes;
@@ -173,8 +175,14 @@ public class DynamicLayoutInflater {
         }
         if (setter != null) {
             for (Map.Entry<String, String> entry : attrs.entrySet()) {
-                String attr = entry.getKey();
-                setter.setAttr(view, attr, entry.getValue(), parent, attrs);
+                String[] attr = entry.getKey().split(":");
+                if (attr.length == 1) {
+                    setter.setAttr(view, attr[0], entry.getValue(), parent, attrs);
+                } else if (attr.length == 2) {
+                    setter.setAttr(view, attr[0], attr[1], entry.getValue(), parent, attrs);
+                } else {
+                    throw new InflateException("illegal attr name: " + entry.getKey());
+                }
             }
             setter.applyPendingAttributes(view, parent);
         } else {

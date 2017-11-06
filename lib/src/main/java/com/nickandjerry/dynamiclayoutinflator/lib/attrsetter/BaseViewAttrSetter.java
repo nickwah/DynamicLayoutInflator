@@ -253,11 +253,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), view.getPaddingRight(), Dimensions.parseToIntPixel(value, view));
                 break;
             case "background":
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    view.setBackground(Drawables.parse(view, value));
-                } else {
-                    view.setBackgroundDrawable(Drawables.parse(view, value));
-                }
+                Drawables.setupWithViewBackground(view, value);
                 break;
             case "accessibilityLiveRegion":
             case "accessibilityTraversalAfter":
@@ -576,6 +572,14 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean setAttr(V view, String ns, String attrName, String value, ViewGroup parent, Map<String, String> attrs) {
+        if (ns.equals("android")) {
+            return setAttr(view, attrName, value, parent, attrs);
+        }
+        return false;
     }
 
     private boolean setGravity(V view, String g) {

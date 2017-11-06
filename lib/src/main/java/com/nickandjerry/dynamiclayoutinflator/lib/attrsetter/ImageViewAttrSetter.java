@@ -1,6 +1,7 @@
 package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.os.Build;
 import android.renderscript.Sampler;
 import android.view.InflateException;
@@ -48,13 +49,13 @@ public class ImageViewAttrSetter<V extends ImageView> extends BaseViewAttrSetter
                 view.setMaxWidth(Dimensions.parseToIntPixel(value, view));
                 break;
             case "path":
-                view.setImageDrawable(Drawables.parse(view, wrapAsPath(value)));
+                Drawables.setupWithImage(view,  wrapAsPath(value));
                 break;
             case "scaleType":
                 view.setScaleType(parseScaleType(value));
                 break;
             case "src":
-                view.setImageDrawable(Drawables.parse(view, value));
+                Drawables.setupWithImage(view, value);
                 break;
             case "tint":
                 view.setColorFilter(Colors.parse(view, value));
@@ -65,7 +66,7 @@ public class ImageViewAttrSetter<V extends ImageView> extends BaseViewAttrSetter
                 }
                 break;
             case "url":
-                view.setImageDrawable(Drawables.parse(view, wrapAsUrl(value)));
+                Drawables.setupWithImage(view,  wrapAsUrl(value));
                 break;
             default:
                 return false;

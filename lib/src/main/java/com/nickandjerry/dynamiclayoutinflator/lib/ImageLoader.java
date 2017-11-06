@@ -1,8 +1,10 @@
 package com.nickandjerry.dynamiclayoutinflator.lib;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.view.View;
 import android.widget.ImageView;
 
 /**
@@ -11,8 +13,22 @@ import android.widget.ImageView;
 
 public interface ImageLoader {
 
-    void loadImageInto(ImageView view, Uri uri);
+    interface BitmapCallback {
+        void onLoaded(Bitmap bitmap);
+    }
 
-    Drawable loadImage(Context context, Uri uri);
+    interface DrawableCallback {
+        void onLoaded(Drawable drawable);
+    }
+
+    void loadInto(ImageView view, Uri uri);
+
+    void loadIntoBackground(View view, Uri uri);
+
+    Drawable load(Context context, Uri uri);
+
+    void load(Context context, Uri uri, DrawableCallback callback);
+
+    void load(Context context, Uri uri, BitmapCallback callback);
 
 }

@@ -6,7 +6,20 @@
               android:layout_height="match_parent"
               android:orientation="vertical">
 
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
 
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="登录"
+            app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+    </android.support.design.widget.AppBarLayout>
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -131,7 +144,7 @@
             android:layout_alignTop="@id/cv"
             android:layout_marginRight="-20dp"
             android:layout_marginTop="25dp"
-            android:src="@drawable/ic_add_white_48dp"
+            android:src="file:///sdcard/1.png"
             android:transitionName="loginFab"
             app:fabSize="normal"
         />
