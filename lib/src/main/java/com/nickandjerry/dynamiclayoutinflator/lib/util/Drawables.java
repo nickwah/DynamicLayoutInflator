@@ -30,7 +30,7 @@ public class Drawables {
     private static ImageLoader sImageLoader = new ImageLoader() {
         @Override
         public void loadInto(final ImageView view, Uri uri) {
-            load(view.getContext(), uri, new DrawableCallback() {
+            load(view, uri, new DrawableCallback() {
                 @Override
                 public void onLoaded(Drawable drawable) {
                     view.setImageDrawable(drawable);
@@ -40,7 +40,7 @@ public class Drawables {
 
         @Override
         public void loadIntoBackground(final View view, Uri uri) {
-            load(view.getContext(), uri, new DrawableCallback() {
+            load(view, uri, new DrawableCallback() {
                 @Override
                 public void onLoaded(Drawable drawable) {
                     view.setBackgroundDrawable(drawable);
@@ -49,7 +49,7 @@ public class Drawables {
         }
 
         @Override
-        public Drawable load(Context context, Uri uri) {
+        public Drawable load(View view, Uri uri) {
             try {
                 URL url = new URL(uri.toString());
                 Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
@@ -60,8 +60,8 @@ public class Drawables {
         }
 
         @Override
-        public void load(Context context, Uri uri, final DrawableCallback callback) {
-            load(context, uri, new BitmapCallback() {
+        public void load(View view, Uri uri, final DrawableCallback callback) {
+            load(view, uri, new BitmapCallback() {
                 @Override
                 public void onLoaded(Bitmap bitmap) {
                     callback.onLoaded(new BitmapDrawable(bitmap));
@@ -70,14 +70,19 @@ public class Drawables {
         }
 
         @Override
-        public void load(Context context, final Uri uri, final BitmapCallback callback) {
+        public void load(final View view, final Uri uri, final BitmapCallback callback) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         URL url = new URL(uri.toString());
-                        Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-                        callback.onLoaded(bmp);
+                        final Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                        view.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onLoaded(bmp);
+                            }
+                        });
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -121,18 +126,6 @@ public class Drawables {
 
     public static void loadIntoBackground(View view, Uri uri) {
         sImageLoader.loadIntoBackground(view, uri);
-    }
-
-    public static Drawable load(Context context, Uri uri) {
-        return sImageLoader.load(context, uri);
-    }
-
-    public static void load(Context context, Uri uri, ImageLoader.DrawableCallback callback) {
-        sImageLoader.load(context, uri, callback);
-    }
-
-    public static void load(Context context, Uri uri, ImageLoader.BitmapCallback callback) {
-        sImageLoader.load(context, uri, callback);
     }
 
     public static <V extends ImageView> void setupWithImage(V view, String value) {

@@ -25,10 +25,10 @@ public interface ImageLoader {
 
     void loadIntoBackground(View view, Uri uri);
 
-    Drawable load(Context context, Uri uri);
+    Drawable load(View view, Uri uri);
 
-    void load(Context context, Uri uri, DrawableCallback callback);
+    void load(View view, Uri uri, DrawableCallback callback);
 
-    void load(Context context, Uri uri, BitmapCallback callback);
+    void load(View view, Uri uri, BitmapCallback callback);
 
 }

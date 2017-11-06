@@ -144,7 +144,7 @@
             android:layout_alignTop="@id/cv"
             android:layout_marginRight="-20dp"
             android:layout_marginTop="25dp"
-            android:src="file:///sdcard/1.png"
+            android:src="http://www.autojs.org/assets/uploads/profile/1-profileavatar.jpeg"
             android:transitionName="loginFab"
             app:fabSize="normal"
         />
