@@ -95,7 +95,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
         switch (attr) {
             case "id":
-                view.setId(Ids.getIdFromName(value));
+                view.setId(Ids.parse(value));
                 break;
             case "gravity":
                 return setGravity(view, value);
@@ -562,7 +562,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
         }
         if (layoutRule != null && parent instanceof RelativeLayout) {
             if (layoutTarget) {
-                int anchor = Ids.getIdFromName(value);
+                int anchor = Ids.parse(value);
                 ((RelativeLayout.LayoutParams) layoutParams).addRule(layoutRule, anchor);
             } else if (value.equals("true")) {
                 ((RelativeLayout.LayoutParams) layoutParams).addRule(layoutRule);

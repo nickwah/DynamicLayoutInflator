@@ -1,7 +1,5 @@
 package com.nickandjerry.dynamiclayoutinflator.lib.util;
 
-import android.view.View;
-
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,7 +12,7 @@ public class Ids {
     private static AtomicInteger maxId = new AtomicInteger(20161209);
     private static HashMap<String, Integer> ids = new HashMap<>();
 
-    public static String parseName(String idName) {
+    public static String parseIdName(String idName) {
         if (idName.startsWith("@+id/")) {
             return idName.substring(5);
         } else if (idName.startsWith("@id/")) {
@@ -23,8 +21,8 @@ public class Ids {
         return idName;
     }
 
-    public static int getIdFromName(String name) {
-        name = parseName(name);
+    public static int parse(String name) {
+        name = parseIdName(name);
         Integer id = ids.get(name);
         if (id == null) {
             id = maxId.incrementAndGet();

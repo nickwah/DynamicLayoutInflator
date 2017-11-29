@@ -2,6 +2,7 @@ package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 
 import android.animation.LayoutTransition;
 import android.os.Build;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.nickandjerry.dynamiclayoutinflator.lib.util.ValueMapper;
@@ -72,5 +73,9 @@ public class ViewGroupAttrSetter<V extends ViewGroup> extends BaseViewAttrSetter
                 return super.setAttr(view, attr, value, parent, attrs);
         }
         return true;
+    }
+
+    public void applyPendingAttributesAboutChildren(V view) {
+
     }
 }

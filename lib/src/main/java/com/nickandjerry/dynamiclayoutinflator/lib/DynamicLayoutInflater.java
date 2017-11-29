@@ -1,25 +1,28 @@
 package com.nickandjerry.dynamiclayoutinflator.lib;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.DatePickerAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ImageViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.LinearLayoutAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ProgressBarAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.RadioGroupAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ToolbarAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ViewGroupAttrSetter;
@@ -33,7 +36,6 @@ import org.w3c.dom.NodeList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +82,8 @@ public class DynamicLayoutInflater {
         registerViewAttrSetter(View.class.getName(), new BaseViewAttrSetter<>());
         registerViewAttrSetter(Toolbar.class.getName(), new ToolbarAttrSetter<>());
         registerViewAttrSetter(DatePicker.class.getName(), new DatePickerAttrSetter());
+        registerViewAttrSetter(RadioGroup.class.getName(), new RadioGroupAttrSetter<>());
+        registerViewAttrSetter(ProgressBar.class.getName(), new ProgressBarAttrSetter<>());
 
     }
 
@@ -123,17 +127,33 @@ public class DynamicLayoutInflater {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private View inflate(Node node, ViewGroup parent) {
         HashMap<String, String> attrs = getAttributesMap(node);
         View view = createViewForName(node.getNodeName(), attrs);
         if (parent != null) {
             parent.addView(view); // have to add to parent to enable certain layout attrs
         }
-        applyAttributes(view, attrs, parent);
+        ViewAttrSetter<View> setter = (ViewAttrSetter<View>) getViewAttrSetter(view);
+        applyAttributes(view, setter, attrs, parent);
         if (view instanceof ViewGroup && node.hasChildNodes()) {
             inflateChildren(node, (ViewGroup) view);
+            if (setter instanceof ViewGroupAttrSetter) {
+                ((ViewGroupAttrSetter) setter).applyPendingAttributesAboutChildren((ViewGroup) view);
+            }
         }
         return view;
+    }
+
+    @Nullable
+    private ViewAttrSetter<?> getViewAttrSetter(View view) {
+        ViewAttrSetter<?> setter = mViewAttrSetters.get(view.getClass().getName());
+        Class c = view.getClass();
+        while (setter == null && c != View.class) {
+            c = c.getSuperclass();
+            setter = mViewAttrSetters.get(c.getName());
+        }
+        return setter;
     }
 
     private void inflateChildren(Node node, ViewGroup parent) {
@@ -185,13 +205,7 @@ public class DynamicLayoutInflater {
     }
 
     @SuppressWarnings("unchecked")
-    private void applyAttributes(View view, Map<String, String> attrs, ViewGroup parent) {
-        ViewAttrSetter<View> setter = (ViewAttrSetter<View>) mViewAttrSetters.get(view.getClass().getName());
-        Class c = view.getClass();
-        while (setter == null && c != View.class) {
-            c = c.getSuperclass();
-            setter = (ViewAttrSetter<View>) mViewAttrSetters.get(c.getName());
-        }
+    private void applyAttributes(View view, ViewAttrSetter<View> setter, Map<String, String> attrs, ViewGroup parent) {
         if (setter != null) {
             for (Map.Entry<String, String> entry : attrs.entrySet()) {
                 String[] attr = entry.getKey().split(":");

@@ -21,11 +21,6 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <DatePicker
-        android:layout_width="wrap_content"
-        android:calendarViewShown="false"
-        android:datePickerMode="spinner"
-        android:layout_height="wrap_content"/>
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
