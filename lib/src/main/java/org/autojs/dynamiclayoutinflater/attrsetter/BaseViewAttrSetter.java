@@ -285,9 +285,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 }
                 break;
             case "defaultFocusHighlightEnabled":
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    view.setDefaultFocusHighlightEnabled(Boolean.valueOf(value));
-                }
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "drawingCacheQuality":
                 view.setDrawingCacheQuality(DRAWABLE_CACHE_QUALITIES.get(value));
@@ -319,9 +317,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 view.setFocusableInTouchMode(Boolean.valueOf(value));
                 break;
             case "focusedByDefault":
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    view.setFocusedByDefault(Boolean.valueOf(value));
-                }
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "forceHasOverlappingRendering":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -366,9 +362,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 view.setKeepScreenOn(Boolean.valueOf(value));
                 break;
             case "keyboardNavigationCluster":
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    view.setKeyboardNavigationCluster(Boolean.valueOf(value));
-                }
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "layerType":
                 Exceptions.unsupports(view, attr, value);
@@ -527,9 +521,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
 
                 break;
             case "tooltipText":
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    view.setTooltipText(Strings.parse(view, value));
-                }
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "transformPivotX":
                 view.setPivotX(Dimensions.parseToPixel(value, view));

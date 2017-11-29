@@ -61,9 +61,7 @@ public class ProgressBarAttrSetter<V extends ProgressBar> extends BaseViewAttrSe
                 Exceptions.unsupports(view, attr, value);
                 break;
             case "min":
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    view.setMin(Integer.parseInt(value));
-                }
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "minHeigh":
                 view.setMinimumHeight(Dimensions.parseToIntPixel(value, view));
