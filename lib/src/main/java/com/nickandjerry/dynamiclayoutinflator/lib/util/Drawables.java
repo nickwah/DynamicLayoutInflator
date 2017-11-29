@@ -151,4 +151,8 @@ public class Drawables {
     public static void setImageLoader(ImageLoader imageLoader) {
         sImageLoader = imageLoader;
     }
+
+    public static ImageLoader getImageLoader() {
+        return sImageLoader;
+    }
 }

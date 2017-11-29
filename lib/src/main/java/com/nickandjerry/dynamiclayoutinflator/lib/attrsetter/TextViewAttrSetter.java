@@ -166,7 +166,7 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
             case "drawableEnd":
             case "editable":
             case "editorExtras":
-                Util.unsupports(view, attrName, value);
+                Exceptions.unsupports(view, attrName, value);
             case "elegantTextHeight":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     view.setElegantTextHeight(Boolean.valueOf(value));
@@ -216,7 +216,7 @@ public class TextViewAttrSetter<V extends TextView> extends BaseViewAttrSetter<V
                 view.setIncludeFontPadding(Boolean.valueOf(value));
                 break;
             case "inputMethod":
-                Util.unsupports(view, attrName, value);
+                Exceptions.unsupports(view, attrName, value);
             case "inputType":
                 view.setInputType(INPUT_TYPES.split(value));
                 break;

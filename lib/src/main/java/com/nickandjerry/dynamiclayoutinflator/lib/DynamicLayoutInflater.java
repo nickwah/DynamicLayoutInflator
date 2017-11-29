@@ -2,22 +2,27 @@ package com.nickandjerry.dynamiclayoutinflator.lib;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.DatePickerAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ImageViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.LinearLayoutAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ToolbarAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ViewGroupAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Res;
 
 import org.w3c.dom.Document;
@@ -62,18 +67,28 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class DynamicLayoutInflater {
     private static final String LOG_TAG = "DynamicLayoutInflater";
 
-    private Map<String, ViewAttrSetter<? extends View>> mViewAttrSetters = new HashMap<>();
+    private Map<String, ViewAttrSetter<?>> mViewAttrSetters = new HashMap<>();
+    private Map<String, ViewCreator<?>> mViewCreators = new HashMap<>();
     private Context mContext;
 
     public DynamicLayoutInflater(Context context) {
         mContext = context;
-        mViewAttrSetters.put(TextView.class.getName(), new TextViewAttrSetter<>());
-        mViewAttrSetters.put(EditText.class.getName(), new TextViewAttrSetter<>());
-        mViewAttrSetters.put(ImageView.class.getName(), new ImageViewAttrSetter<>());
-        mViewAttrSetters.put(LinearLayout.class.getName(), new LinearLayoutAttrSetter<>());
-        mViewAttrSetters.put(View.class.getName(), new BaseViewAttrSetter<>());
-        mViewAttrSetters.put(Toolbar.class.getName(), new ToolbarAttrSetter<>());
+        registerViewAttrSetter(TextView.class.getName(), new TextViewAttrSetter<>());
+        registerViewAttrSetter(EditText.class.getName(), new TextViewAttrSetter<>());
+        registerViewAttrSetter(ImageView.class.getName(), new ImageViewAttrSetter<>());
+        registerViewAttrSetter(LinearLayout.class.getName(), new LinearLayoutAttrSetter<>());
+        registerViewAttrSetter(View.class.getName(), new BaseViewAttrSetter<>());
+        registerViewAttrSetter(Toolbar.class.getName(), new ToolbarAttrSetter<>());
+        registerViewAttrSetter(DatePicker.class.getName(), new DatePickerAttrSetter());
 
+    }
+
+    public void registerViewAttrSetter(String fullName, ViewAttrSetter<?> setter) {
+        mViewAttrSetters.put(fullName, setter);
+        ViewCreator<?> creator = setter.getCreator();
+        if (creator != null) {
+            mViewCreators.put(fullName, creator);
+        }
     }
 
     public View inflate(String xml) {
@@ -138,20 +153,24 @@ public class DynamicLayoutInflater {
             if (!name.contains(".")) {
                 name = "android.widget." + name;
             }
+            ViewCreator<?> creator = mViewCreators.get(name);
+            if (creator != null) {
+                return creator.create(mContext, attrs);
+            }
             Class<?> clazz = Class.forName(name);
             String style = attrs.get("style");
-            if (style == null) {
+            if (style == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 return (View) clazz.getConstructor(Context.class).newInstance(mContext);
             } else {
-                // FIXME: 2017/11/5 not working
                 int styleRes = Res.parseStyle(mContext, style);
-                return (View) clazz.getConstructor(Context.class, AttributeSet.class, int.class)
-                        .newInstance(mContext, null, styleRes);
+                return (View) clazz.getConstructor(Context.class, AttributeSet.class, int.class, int.class)
+                        .newInstance(mContext, null, 0, styleRes);
             }
         } catch (Exception e) {
             throw new InflateException(e);
         }
     }
+
 
     private HashMap<String, String> getAttributesMap(Node currentNode) {
         NamedNodeMap attributeMap = currentNode.getAttributes();

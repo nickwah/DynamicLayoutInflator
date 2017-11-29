@@ -55,7 +55,7 @@ public class ViewGroupAttrSetter<V extends ViewGroup> extends BaseViewAttrSetter
                 view.setDescendantFocusability(DESCENDANT_FOCUSABILITY.get(value));
                 break;
             case "layoutAnimation":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "layoutMode":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {

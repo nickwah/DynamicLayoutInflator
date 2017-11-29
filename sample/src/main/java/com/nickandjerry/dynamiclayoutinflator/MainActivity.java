@@ -25,6 +25,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.testlayout);
+        setDynamicLayout();
+    }
+
+    private void setDynamicLayout() {
         setContentView(R.layout.activity_main);
         FrameLayout main = findViewById(R.id.main_top);
         DynamicLayoutInflater inflater = new DynamicLayoutInflater(this);
@@ -35,13 +40,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void ohHello() {
-        Log.d("nick", "howdy");
-    }
-
-    public void logStringNum(String text, int num) {
-        Log.d("nick", "logging: " + text + " - " + num);
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

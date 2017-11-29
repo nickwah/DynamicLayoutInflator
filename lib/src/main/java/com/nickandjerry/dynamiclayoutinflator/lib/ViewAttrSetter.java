@@ -1,5 +1,6 @@
 package com.nickandjerry.dynamiclayoutinflator.lib;
 
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -17,4 +18,7 @@ public interface ViewAttrSetter<V extends View> {
     boolean setAttr(V view, String ns, String attrName, String value, ViewGroup parent, Map<String, String> attrs);
 
     void applyPendingAttributes(V view, ViewGroup parent);
+
+    @Nullable
+    ViewCreator<V> getCreator();
 }

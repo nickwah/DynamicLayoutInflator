@@ -3,13 +3,14 @@ package com.nickandjerry.dynamiclayoutinflator.lib.attrsetter;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.os.Build;
-import android.view.Gravity;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
+import com.nickandjerry.dynamiclayoutinflator.lib.ViewCreator;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Colors;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Dimensions;
 import com.nickandjerry.dynamiclayoutinflator.lib.ViewAttrSetter;
@@ -19,10 +20,6 @@ import com.nickandjerry.dynamiclayoutinflator.lib.util.Ids;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Strings;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.ValueMapper;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -258,13 +255,13 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             case "accessibilityLiveRegion":
             case "accessibilityTraversalAfter":
             case "accessibilityTraversalBefore":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
             case "alpha":
                 view.setAlpha(Float.valueOf(value));
                 break;
             case "autofillHints":
             case "autofilledHighlight":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "backgroundTint":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -360,7 +357,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 }
                 break;
             case "importantForAutofill":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "isScrollContainer":
                 view.setScrollContainer(Boolean.valueOf(value));
@@ -374,7 +371,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 }
                 break;
             case "layerType":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "layoutDirection":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -391,25 +388,25 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 view.setMinimumWidth(Dimensions.parseToIntPixel(value, view));
                 break;
             case "nextClusterForward":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "nextFocusDown":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "nextFocusForward":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "nextFocusLeft":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "nextFocusRight":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "nextFocusUp":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "onClick":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "paddingEnd":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -422,7 +419,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 break;
             case "paddingHorizontal":
             case "paddingVertical":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "paddingStart":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -473,7 +470,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 break;
             case "scrollbarAlwaysDrawHorizontalTrack":
             case "scrollbarAlwaysDrawVerticalTrack":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
                 break;
             case "scrollbarDefaultDelayBeforeFade":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -497,7 +494,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             case "scrollbarThumbVertical":
             case "scrollbarTrackHorizontal":
             case "scrollbarTrackVertical":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
             case "scrollbars":
                 for (String str : value.split("|")) {
                     if (str.equals("horizontal")) {
@@ -511,7 +508,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 view.setSoundEffectsEnabled(Boolean.valueOf(value));
                 break;
             case "stateListAnimator":
-                Util.unsupports(view, attr, value);
+                Exceptions.unsupports(view, attr, value);
             case "tag":
                 view.setTag(Strings.parse(view, value));
                 break;
@@ -526,7 +523,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
                 }
                 break;
             case "theme":
-                //Util.unsupports(view, attr, value);
+                //Exceptions.unsupports(view, attr, value);
 
                 break;
             case "tooltipText":
@@ -590,7 +587,7 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
             return true;
         } catch (Exception e) {
             if (view instanceof FrameLayout) {
-                Util.unsupports(view, "gravity", g);
+                Exceptions.unsupports(view, "gravity", g);
             }
             e.printStackTrace();
             return false;
@@ -600,5 +597,11 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
     @Override
     public void applyPendingAttributes(V view, ViewGroup parent) {
 
+    }
+
+    @Nullable
+    @Override
+    public ViewCreator<V> getCreator() {
+        return null;
     }
 }
