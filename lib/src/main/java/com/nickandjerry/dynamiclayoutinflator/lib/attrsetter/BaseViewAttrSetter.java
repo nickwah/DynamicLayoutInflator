@@ -580,15 +580,11 @@ public class BaseViewAttrSetter<V extends View> implements ViewAttrSetter<V> {
     }
 
     private boolean setGravity(V view, String g) {
-        // FIXME: 2017/11/5 FrameLayout must set layout_gravity to each child
         try {
             Method setGravity = view.getClass().getMethod("setGravity", int.class);
             setGravity.invoke(view, Gravities.parse(g));
             return true;
         } catch (Exception e) {
-            if (view instanceof FrameLayout) {
-                Exceptions.unsupports(view, "gravity", g);
-            }
             e.printStackTrace();
             return false;
         }

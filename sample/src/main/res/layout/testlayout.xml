@@ -21,12 +21,6 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <SeekBar
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:progress="40"/>
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">

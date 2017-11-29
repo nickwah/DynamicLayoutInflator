@@ -11,18 +11,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.DatePickerAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.FrameLayoutAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ImageViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.LinearLayoutAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ProgressBarAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.RadioGroupAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.SpinnerAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ToolbarAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ViewGroupAttrSetter;
@@ -79,11 +83,13 @@ public class DynamicLayoutInflater {
         registerViewAttrSetter(EditText.class.getName(), new TextViewAttrSetter<>());
         registerViewAttrSetter(ImageView.class.getName(), new ImageViewAttrSetter<>());
         registerViewAttrSetter(LinearLayout.class.getName(), new LinearLayoutAttrSetter<>());
+        registerViewAttrSetter(FrameLayout.class.getName(), new FrameLayoutAttrSetter<>());
         registerViewAttrSetter(View.class.getName(), new BaseViewAttrSetter<>());
         registerViewAttrSetter(Toolbar.class.getName(), new ToolbarAttrSetter<>());
         registerViewAttrSetter(DatePicker.class.getName(), new DatePickerAttrSetter());
         registerViewAttrSetter(RadioGroup.class.getName(), new RadioGroupAttrSetter<>());
         registerViewAttrSetter(ProgressBar.class.getName(), new ProgressBarAttrSetter<>());
+        registerViewAttrSetter(Spinner.class.getName(), new SpinnerAttrSetter());
 
     }
 
