@@ -3,21 +3,12 @@ package com.nickandjerry.dynamiclayoutinflator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.RelativeLayout;
 
 
-import com.nickandjerry.dynamiclayoutinflator.lib.DynamicLayoutInflater;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.IOException;
+import org.autojs.dynamiclayoutinflater.DynamicLayoutInflater;
 
 
 public class MainActivity extends AppCompatActivity {

@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.nickandjerry.dynamiclayoutinflator.lib.DynamicLayoutInflater;
+import org.autojs.dynamiclayoutinflater.DynamicLayoutInflater;
 
 import java.io.IOException;
 
