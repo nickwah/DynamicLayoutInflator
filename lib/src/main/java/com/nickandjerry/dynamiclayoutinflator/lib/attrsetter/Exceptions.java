@@ -8,20 +8,26 @@ import android.view.View;
 
 public class Exceptions {
 
-    private static boolean sIgnoresUnsupportedException = false;
+    public interface ExceptionHandler {
+        boolean handleUnsupportedException(UnsupportedOperationException e, View v, String attrName, String value);
+    }
+
+    private static ExceptionHandler sExceptionHandler;
 
     public static void unsupports(View v, String name, String value) {
-        if (sIgnoresUnsupportedException)
-            return;
-        throw new UnsupportedOperationException(String.format("Attr %s:%s=\"%s\" is not supported",
+        UnsupportedOperationException e = new UnsupportedOperationException(String.format("Attr %s:%s=\"%s\" is not supported",
                 v.getClass().getSimpleName(), name, value));
+        if (sExceptionHandler == null || !sExceptionHandler.handleUnsupportedException(e, v, name, value)) {
+            throw e;
+        }
+
     }
 
-    public static boolean ignoresUnsupportedException() {
-        return sIgnoresUnsupportedException;
+    public static ExceptionHandler getExceptionHandler() {
+        return sExceptionHandler;
     }
 
-    public static void setIgnoreUnsupportException(boolean ignoresUnsupportedException) {
-        sIgnoresUnsupportedException = ignoresUnsupportedException;
+    public static void setExceptionHandler(ExceptionHandler exceptionHandler) {
+        sExceptionHandler = exceptionHandler;
     }
 }

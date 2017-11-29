@@ -18,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.BaseViewAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.DatePickerAttrSetter;
@@ -28,6 +29,7 @@ import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ProgressBarAttrSett
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.RadioGroupAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.SpinnerAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TextViewAttrSetter;
+import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.TimePickerAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ToolbarAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.attrsetter.ViewGroupAttrSetter;
 import com.nickandjerry.dynamiclayoutinflator.lib.util.Res;
@@ -90,6 +92,7 @@ public class DynamicLayoutInflater {
         registerViewAttrSetter(RadioGroup.class.getName(), new RadioGroupAttrSetter<>());
         registerViewAttrSetter(ProgressBar.class.getName(), new ProgressBarAttrSetter<>());
         registerViewAttrSetter(Spinner.class.getName(), new SpinnerAttrSetter());
+        registerViewAttrSetter(TimePicker.class.getName(), new TimePickerAttrSetter());
 
     }
 

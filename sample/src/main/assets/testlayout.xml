@@ -20,10 +20,16 @@
             app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
     </android.support.design.widget.AppBarLayout>
-    <Spinner
-        android:layout_width="match_parent"
+
+    <TimePicker
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:entries="xx|aaa|xxx"/>
+        android:timePickerMode="spinner"/>
+
+
+    <TimePicker
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
